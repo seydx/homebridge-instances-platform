@@ -21,6 +21,7 @@ This plugin supports following functions:
 - **Power Switch** Start/Stop Homebridge Instance
 - **Service Status** shows current state of the homebridge instance (active/inactive)
 - **Running Time** shows current running time of the homebridge instance
+- **Dynamic** this plugin adds/removes dynamically new enabled/disabled services
 
 ## Installation instructions
 
