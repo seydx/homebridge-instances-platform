@@ -1,0 +1,34 @@
+{
+  "name": "homebridge-instances-platform",
+  "version": "1.0.0",
+  "description": "homebridge-instances-platform",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SeydX/homebridge-instances-platform.git"
+  },
+  "author": "SeydX (https://github.com/SeydX/homebridge-instances-platform)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/SeydX/homebridge-instances-platform/issues"
+  },
+  "homepage": "https://github.com/SeydX/homebridge-instances-platform#readme",
+  "keywords": [
+    "bravia",
+    "player",
+    "homebridge",
+    "homebridge-plugin",
+    "plugin",
+    "tv",
+    "android"
+  ],
+  "engines": {
+    "node": "^8.9.1",
+    "homebridge": "^0.4.48"
+  },
+  "dependencies": {}
+}

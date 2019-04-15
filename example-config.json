@@ -1,0 +1,16 @@
+{
+ "bridge": {
+   ...
+},
+ "accessories": [
+   ...
+],
+  "platforms": [
+    {
+      "platform": "InstancesPlatform",
+      "startParam": "homebrige-",
+      "clearCache": false,
+      "sudo": false
+    }
+  ]
+}
