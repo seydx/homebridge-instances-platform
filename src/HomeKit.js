@@ -27,10 +27,10 @@ module.exports = {
     Characteristic.CPUUsage = function() {
       Characteristic.call(this, 'CPU %', '76c9c4e5-23b0-441c-aea6-f2cb680d5a95');
       this.setProps({
-        format: Characteristic.Formats.PERCENTAGE,
+        format: Characteristic.Formats.FLOAT,
         minValue: 0,
         maxValue: 100,
-        minStep: 0.1,
+        minStep: 0.01,
         perms: [Characteristic.Perms.READ, Characteristic.Perms.NOTIFY]
       });
       this.value = this.getDefaultValue();
