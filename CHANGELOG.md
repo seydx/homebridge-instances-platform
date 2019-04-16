@@ -1,5 +1,10 @@
 # Changelog
 
+
+## 1.1.2 - 2019-04-16
+- CPU usage improvements
+- Bugfixes
+
 ## 1.1.0 - 2019-04-16
 - [CHANGED] Accessory type from "OTHER" to "SWITCH"
 - [NEW] CPU Usage of all "homebridge" instances for Main Switch
