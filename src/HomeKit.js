@@ -20,6 +20,23 @@ module.exports = {
     };
     inherits(Characteristic.ServiceStatus, Characteristic);
     Characteristic.ServiceStatus.UUID = '0258a1bf-6b32-470d-aa92-ba340eee4441';   
+    
+    /// /////////////////////////////////////////////////////////////////////////
+    // CPUUsage Characteristic
+    /// ///////////////////////////////////////////////////////////////////////// 
+    Characteristic.CPUUsage = function() {
+      Characteristic.call(this, 'CPU %', '76c9c4e5-23b0-441c-aea6-f2cb680d5a95 ');
+      this.setProps({
+        format: Characteristic.Formats.PERCENTAGE,
+        minValue: 0,
+        maxValue: 100,
+        minStep: 0.1,
+        perms: [Characteristic.Perms.READ, Characteristic.Perms.NOTIFY]
+      });
+      this.value = this.getDefaultValue();
+    };
+    inherits(Characteristic.CPUUsage, Characteristic);
+    Characteristic.CPUUsage.UUID = '76c9c4e5-23b0-441c-aea6-f2cb680d5a95 '; 
   
     /// /////////////////////////////////////////////////////////////////////////
     // RunningTime Characteristic
@@ -43,11 +60,12 @@ module.exports = {
       
       // Required Characteristics
       this.addCharacteristic(Characteristic.On);
+      this.addCharacteristic(Characteristic.ServiceStatus);
+      this.addCharacteristic(Characteristic.RunningTime);
+      this.addCharacteristic(Characteristic.CPUUsage);
 
       // Optional Characteristics
       this.addOptionalCharacteristic(Characteristic.Name);
-      this.addOptionalCharacteristic(Characteristic.ServiceStatus);
-      this.addOptionalCharacteristic(Characteristic.RunningTime);
     
     };
     inherits(Service.Instances, Service);
