@@ -166,6 +166,8 @@ class BridgeAccessory {
     Instances.addCharacteristic(Characteristic.ServiceStatus);
     
     Instances.addCharacteristic(Characteristic.RunningTime);
+    
+    Instances.addCharacteristic(Characteristic.CPUUsage);
   
     return Instances;
   
@@ -186,6 +188,8 @@ class BridgeAccessory {
    
       let state = await this.handleServiceStatus(service);
       let runningTime = await this.handleRunningTime(service);
+      let pid = await this.handleServicePIDs(service);
+      let cpu = await this.handleCPUUsage(pid);
    
       state = (state === 'active') ? true : false;
    
@@ -193,10 +197,13 @@ class BridgeAccessory {
         .updateValue(state);
      
       service.getCharacteristic(Characteristic.ServiceStatus)
-        .updateValue(state?'active':'not active');
+        .updateValue(state?'active':'inactive');
      
       service.getCharacteristic(Characteristic.RunningTime)
-        .updateValue(state?runningTime:'not running');
+        .updateValue(state?runningTime:'-');
+        
+      service.getCharacteristic(Characteristic.CPUUsage)
+        .updateValue(cpu);
     
     } catch(err){
     
@@ -255,7 +262,10 @@ class BridgeAccessory {
         if (stderr) return reject(stderr);     
         //if(error) return reject(error)
       
-        let lines = stdout.toString().split('\n')[0];
+        stdout = stdout.toString();
+        if(stdout==='') stdout = 'inactive';
+      
+        let lines = stdout.split('\n')[0];
       
         resolve(lines);
       });
@@ -281,6 +291,47 @@ class BridgeAccessory {
       });
     });
   
+  }
+  
+  handleServicePIDs(service){
+
+    return new Promise((resolve, reject) => {
+  
+      exec('systemctl status ' + service.subtype + ' -n 0 | grep "Main PID:"', (error, stdout, stderr) => {
+        if (stderr) return reject(stderr);
+     
+        let lines = stdout.toString().split('\n')[0];
+    
+        lines = lines.split(' Main PID: ')[1];
+        lines = lines.split(' (')[0];
+      
+        resolve(lines);
+      
+      });
+
+    });
+
+  }
+  
+  handleCPUUsage(pid){
+
+    return new Promise((resolve, reject) => {
+  
+      exec('ps -p ' + pid + ' -o pcpu --no-headers', (error, stdout, stderr) => {
+        if (stderr) return reject(stderr);
+     
+        let lines = stdout.toString().replace(/\s/g,'').split('\n')[0];
+      
+        if(lines==='') lines = '0';
+      
+        parseFloat(lines);
+      
+        resolve(lines);
+      
+      });
+
+    });
+
   }
   
 }
