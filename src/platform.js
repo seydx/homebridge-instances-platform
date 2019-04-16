@@ -34,6 +34,7 @@ function InstancesPlatform (log, config, api) {
   this.config.startParam = this.config.startParam || 'homebridge-';
   this.config.showInactives = this.config.showInactives || false;
   this.config.sudo = this.config.sudo || false;
+  this.config.clearCache = this.config.clearCache || false;
 
   if (api) {
   
@@ -79,8 +80,9 @@ InstancesPlatform.prototype = {
     if(add){
 
       let uuid = UUIDGen.generate('Homebridge Instances');
-      accessory = new Accessory('Homebridge Instances', uuid, 1);
-
+      accessory = new Accessory('Homebridge Instances', uuid, 8);
+      accessory.addService(Service.Switch, 'Homebridge Instances', 'Homebridge Instances');
+      
       accessory.context = {};
 
     } else {
@@ -125,7 +127,8 @@ InstancesPlatform.prototype = {
 
     this.accessories.push(accessory);
     
-    this._addOrConfigure(accessory, false);
+    if(!this.config.clearCache)
+      this._addOrConfigure(accessory, false);
   
   },
 
