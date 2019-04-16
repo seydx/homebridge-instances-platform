@@ -25,7 +25,7 @@ module.exports = {
     // CPUUsage Characteristic
     /// ///////////////////////////////////////////////////////////////////////// 
     Characteristic.CPUUsage = function() {
-      Characteristic.call(this, 'CPU %', '76c9c4e5-23b0-441c-aea6-f2cb680d5a95 ');
+      Characteristic.call(this, 'CPU %', '76c9c4e5-23b0-441c-aea6-f2cb680d5a95');
       this.setProps({
         format: Characteristic.Formats.PERCENTAGE,
         minValue: 0,
@@ -36,7 +36,7 @@ module.exports = {
       this.value = this.getDefaultValue();
     };
     inherits(Characteristic.CPUUsage, Characteristic);
-    Characteristic.CPUUsage.UUID = '76c9c4e5-23b0-441c-aea6-f2cb680d5a95 '; 
+    Characteristic.CPUUsage.UUID = '76c9c4e5-23b0-441c-aea6-f2cb680d5a95'; 
   
     /// /////////////////////////////////////////////////////////////////////////
     // RunningTime Characteristic
@@ -56,7 +56,7 @@ module.exports = {
     // Instances Service
     /// ///////////////////////////////////////////////////////////////////////// 
     Service.Instances = function(displayName, subtype) {
-      Service.call(this, displayName, 'f5b4c659-d8dd-4ce1-9757-24c902e586ac ', subtype);
+      Service.call(this, displayName, 'f5b4c659-d8dd-4ce1-9757-24c902e586ac', subtype);
       
       // Required Characteristics
       this.addCharacteristic(Characteristic.On);
@@ -69,7 +69,24 @@ module.exports = {
     
     };
     inherits(Service.Instances, Service);
-    Service.Instances.UUID = 'f5b4c659-d8dd-4ce1-9757-24c902e586ac ';
+    Service.Instances.UUID = 'f5b4c659-d8dd-4ce1-9757-24c902e586ac';
+    
+    /// /////////////////////////////////////////////////////////////////////////
+    // Switch Service
+    /// ///////////////////////////////////////////////////////////////////////// 
+    Service.Switch = function(displayName, subtype) {
+      Service.call(this, displayName, '00000049-0000-1000-8000-0026BB765291', subtype);
+      
+      // Required Characteristics
+      this.addCharacteristic(Characteristic.On);
+
+      // Optional Characteristics
+      this.addOptionalCharacteristic(Characteristic.Name);
+      this.addOptionalCharacteristic(Characteristic.CPUUsage);
+    
+    };
+    inherits(Service.Switch, Service);
+    Service.Switch.UUID = '00000049-0000-1000-8000-0026BB765291';
   
   }
 };
