@@ -57,6 +57,9 @@ class BridgeAccessory {
         
             InstanceService = this.accessory.getServiceByUUIDAndSubType(Service.Instances, service.subname);
             
+            if(!this.accessory.context[service.name])
+              this.accessory.context[service.name] = {};
+            
             this.mainService.addLinkedService(InstanceService);
             
             if(!add)
@@ -69,6 +72,9 @@ class BridgeAccessory {
             let instance = new Service.Instances(service.name, service.subname);
             InstanceService = this.accessory.addService(instance);
         
+            if(!this.accessory.context[service.name])
+              this.accessory.context[service.name] = {};
+            
             this.mainService.addLinkedService(InstanceService);
         
             this.getService(InstanceService);
@@ -90,7 +96,7 @@ class BridgeAccessory {
 
     } finally {
     
-      setTimeout(this.handleAccessory.bind(this, true), 10000);  
+      setTimeout(this.handleAccessory.bind(this, true), 30000);  
     
     }
 
@@ -172,27 +178,35 @@ class BridgeAccessory {
   getService(service) {
     
     if(service){
+
       service.getCharacteristic(Characteristic.On)
         .on('set', this.setServiceState.bind(this, service));
-   
+        
+      service.getCharacteristic(Characteristic.CPUUsage)  
+        .on('get', this.getCPUUsage.bind(this, service));
+        
+      service.getCharacteristic(Characteristic.RunningTime)  
+        .on('get', this.getRunningTime.bind(this, service));
+
       this.getStatus(service);   
     
     } else {
       
       this.mainService.getCharacteristic(Characteristic.On)
-        .on('set', this.setAllServiceState.bind(this))
+        .on('set', this.setMainServiceState.bind(this))
         .updateValue(false);
         
       if(!this.mainService.testCharacteristic(Characteristic.CPUUsage))
         this.mainService.addCharacteristic(Characteristic.CPUUsage);
-        
-      this.getMainStatus();
+      
+      this.mainService.getCharacteristic(Characteristic.CPUUsage)  
+        .on('get', this.getMainCPUUsage.bind(this));
       
     }
 
   }
   
-  getMainStatus(){
+  getMainCPUUsage(callback){
   
     let overallCpu = 0;
         
@@ -208,9 +222,7 @@ class BridgeAccessory {
     
     overallCpu = Math.round(overallCpu * 100) / 100;
     
-    this.mainService.getCharacteristic(Characteristic.CPUUsage).updateValue(overallCpu);
-    
-    setTimeout(this.getMainStatus.bind(this), 5000);
+    callback(null, overallCpu);
   
   }
   
@@ -219,9 +231,6 @@ class BridgeAccessory {
     try {
    
       let state = await this.handleServiceStatus(service);
-      let runningTime = await this.handleRunningTime(service);
-      let pid = await this.handleServicePIDs(service);
-      let cpu = await this.handleCPUUsage(pid);
    
       state = (state === 'active') ? true : false;
    
@@ -230,12 +239,6 @@ class BridgeAccessory {
      
       service.getCharacteristic(Characteristic.ServiceStatus)
         .updateValue(state?'active':'inactive');
-     
-      service.getCharacteristic(Characteristic.RunningTime)
-        .updateValue(state?runningTime:'-');
-        
-      service.getCharacteristic(Characteristic.CPUUsage)
-        .updateValue(cpu);
     
     } catch(err){
     
@@ -246,6 +249,77 @@ class BridgeAccessory {
     
       if(this._services.has(service.displayName))
         setTimeout(this.getStatus.bind(this, service), this.accessory.context.polling);
+    
+    }
+  
+  }
+  
+  async getCPUUsage(service, callback){
+  
+    let cpu;
+  
+    try {
+    
+      let state = service.getCharacteristic(Characteristic.On).value;
+      
+      if(!state){
+  
+        cpu = 0;
+      
+      } else {
+      
+        this.accessory.context[service.displayName].pid = this.accessory.context[service.displayName].pid||await this.handleServicePIDs(service);       
+
+        cpu = await this.handleCPUUsage(this.accessory.context[service.displayName].pid);
+        
+        if(cpu === 'PID changed!'){
+        
+          this.accessory.context[service.displayName].pid = await this.handleServicePIDs(service);
+          cpu = await this.handleCPUUsage(this.accessory.context[service.displayName].pid);
+      
+          if(cpu === 'PID changed!') cpu = 0; //maybe off?
+        
+        }
+        
+      }
+      
+      cpu = parseFloat(cpu);
+    
+    } catch(err){
+    
+      this.logger.error(service.displayName + ': An error occured while getting cpu usage');
+      this.logger.error(err);
+      
+      cpu = 0;
+    
+    } finally {
+    
+      callback(null, cpu);
+    
+    }
+  
+  }
+  
+  async getRunningTime(service, callback){
+  
+    let runningTime;
+  
+    try {
+      
+      let state = service.getCharacteristic(Characteristic.On).value;
+      
+      !state ? runningTime = '-' : runningTime = await this.handleRunningTime(service);  
+    
+    } catch(err){
+    
+      this.logger.error(service.displayName + ': An error occured while getting running time');
+      this.logger.error(err);
+      
+      runningTime = '-';
+    
+    } finally {
+    
+      callback(null, runningTime);
     
     }
   
@@ -272,7 +346,7 @@ class BridgeAccessory {
   
   }
   
-  async setAllServiceState(state, callback){
+  async setMainServiceState(state, callback){
 
     const self = this;
 
@@ -311,11 +385,7 @@ class BridgeAccessory {
   
   handleSetCommand(service, state, restart){
   
-    if(restart){
-      state = 'restart ';
-    } else {
-      state = state ? 'start ' : 'stop ';
-    }
+    restart ? state = 'restart ' : state = state ? 'start ' : 'stop ';
   
     return new Promise((resolve, reject) => {
       exec((this.accessory.context.sudo ? 'sudo ' : '') + 'systemctl ' + state + service.subtype, (error, stdout, stderr) => {
@@ -358,9 +428,11 @@ class BridgeAccessory {
         if(lines){
           lines = lines.split(';')[1];
           lines = lines.split('ago')[0];
-
-          resolve(lines);
+        } else {
+          lines = '0s'
         }
+        
+        resolve(lines);
       });
     });
   
@@ -395,9 +467,7 @@ class BridgeAccessory {
      
         let lines = stdout.toString().replace(/\s/g,'').split('\n')[0];
       
-        if(lines==='') lines = '0';
-      
-        parseFloat(lines);
+        if(lines==='')  lines = 'PID changed!';
       
         resolve(lines);
       
