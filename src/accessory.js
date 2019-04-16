@@ -24,6 +24,9 @@ class BridgeAccessory {
     this._services = new Map();
     
     this.accessory = accessory;
+    this.mainService = this.accessory.getService(Service.Switch, this.accessory.displayName);
+    
+    this.getService();
     
     this.handleAccessory(false);
 
@@ -37,6 +40,8 @@ class BridgeAccessory {
   
     try {
       
+      this._activeServices = new Map();
+      
       let services = await this.handleServices();
       
       for(const service of services){
@@ -46,10 +51,13 @@ class BridgeAccessory {
           let InstanceService;
       
           this._services.set(service.name, service);
+          this._activeServices.set(service.name, service);
   
           if(this.accessory.getServiceByUUIDAndSubType(Service.Instances, service.subname)){
         
             InstanceService = this.accessory.getServiceByUUIDAndSubType(Service.Instances, service.subname);
+            
+            this.mainService.addLinkedService(InstanceService);
             
             if(!add)
               this.getService(InstanceService);
@@ -58,8 +66,10 @@ class BridgeAccessory {
     
             this.logger.info(this.accessory.displayName + ': Adding new Service: ' + service.name);
 
-            let instance = this.handleInstances(service.name, service.subname);
+            let instance = new Service.Instances(service.name, service.subname);
             InstanceService = this.accessory.addService(instance);
+        
+            this.mainService.addLinkedService(InstanceService);
         
             this.getService(InstanceService);
           
@@ -139,9 +149,9 @@ class BridgeAccessory {
   
       for(const service of this.accessory.services){
   
-        if(service.subtype){
+        if(service.subtype && service.subtype !== this.accessory.displayName){
   
-          if(!this._services.has(service.displayName)){
+          if(!this._activeServices.has(service.displayName)){
 
             this.logger.warn(this.accessory.displayName + ': Removing Service: ' + service.displayName);  
             this._services.delete(service.displayName);
@@ -158,28 +168,49 @@ class BridgeAccessory {
     });
   
   }
-  
-  handleInstances(service, subtype){
-  
-    let Instances = new Service.Instances(service, subtype);
-    
-    Instances.addCharacteristic(Characteristic.ServiceStatus);
-    
-    Instances.addCharacteristic(Characteristic.RunningTime);
-    
-    Instances.addCharacteristic(Characteristic.CPUUsage);
-  
-    return Instances;
-  
-  }
 
   getService(service) {
-  
-    service.getCharacteristic(Characteristic.On)
-      .on('set', this.setServiceState.bind(this, service));
+    
+    if(service){
+      service.getCharacteristic(Characteristic.On)
+        .on('set', this.setServiceState.bind(this, service));
    
-    this.getStatus(service);   
+      this.getStatus(service);   
+    
+    } else {
+      
+      this.mainService.getCharacteristic(Characteristic.On)
+        .on('set', this.setAllServiceState.bind(this));
+        
+      if(!this.mainService.testCharacteristic(Characteristic.CPUUsage))
+        this.mainService.addCharacteristic(Characteristic.CPUUsage);
+        
+      this.getMainStatus();
+      
+    }
 
+  }
+  
+  getMainStatus(){
+  
+    let overallCpu = 0;
+        
+    this.accessory.services.map( service => {
+      
+      if(service.subtype && service.subtype !== this.accessory.displayName){
+    
+        overallCpu += parseFloat(service.getCharacteristic(Characteristic.CPUUsage).value);
+    
+      }
+      
+    });
+    
+    overallCpu = Math.round(overallCpu * 100) / 100;
+    
+    this.mainService.getCharacteristic(Characteristic.CPUUsage).updateValue(overallCpu);
+    
+    setTimeout(this.getMainStatus.bind(this), 5000);
+  
   }
   
   async getStatus(service){
@@ -240,16 +271,57 @@ class BridgeAccessory {
   
   }
   
-  handleSetCommand(service, state){
+  async setAllServiceState(state, callback){
+
+    const self = this;
+
+    try {
+
+      if(state){
+      
+        this.logger.info(this.accessory.displayName + ': Restarting all services!');
+      
+        this.accessory.services.map( async service => {
+    
+          if(service.subtype && service.subtype !== this.accessory.displayName){
+  
+            await this.handleSetCommand(service, null, true);
+  
+          }
+         
+        });
+
+      }
+
+    } catch(err){
+
+      this.logger.error(this.accessory.displayName + ': An error occured while restarting all services!');
+      this.logger.error(err);
+
+    } finally {
+
+      setTimeout(function(){ self.mainService.getCharacteristic(Characteristic.On).updateValue(false); }, 500);
+    
+      callback();
+  
+    }
+  
+  }
+  
+  handleSetCommand(service, state, restart){
+  
+    if(restart){
+      state = 'restart ';
+    } else {
+      state = state ? 'start ' : 'stop ';
+    }
   
     return new Promise((resolve, reject) => {
-      exec((this.accessory.context.sudo ? 'sudo ' : '') + 'systemctl ' + (state ? 'start ' : 'stop ') + service.subtype, (error, stdout, stderr) => {
+      exec((this.accessory.context.sudo ? 'sudo ' : '') + 'systemctl ' + state + service.subtype, (error, stdout, stderr) => {
         if (stderr) return reject(stderr);     
         //if(error) return reject(error)
       
-        let lines = stdout.toString().split('\n')[0];
-      
-        resolve(lines);
+        resolve(true);
       });
     });
   
