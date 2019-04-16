@@ -180,7 +180,8 @@ class BridgeAccessory {
     } else {
       
       this.mainService.getCharacteristic(Characteristic.On)
-        .on('set', this.setAllServiceState.bind(this));
+        .on('set', this.setAllServiceState.bind(this))
+        .updateValue(false);
         
       if(!this.mainService.testCharacteristic(Characteristic.CPUUsage))
         this.mainService.addCharacteristic(Characteristic.CPUUsage);
