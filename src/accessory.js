@@ -185,6 +185,24 @@ class BridgeAccessory {
 
       service.getCharacteristic(Characteristic.On)
         .on('set', this.setServiceState.bind(this, service));
+        
+      service.getCharacteristic(Characteristic.CPUUsage)
+        .setProps({
+          format: Characteristic.Formats.FLOAT,
+          unit: Characteristic.Units.PERCENTAGE,
+          minValue: 0,
+          maxValue: 100,
+          minStep: 0.01
+        });
+        
+      service.getCharacteristic(Characteristic.RAMUsage)
+        .setProps({
+          format: Characteristic.Formats.FLOAT,
+          unit: Characteristic.Units.PERCENTAGE,
+          minValue: 0,
+          maxValue: 100,
+          minStep: 0.01
+        });
     
     } else {
       
@@ -195,8 +213,26 @@ class BridgeAccessory {
       if(!this.mainService.testCharacteristic(Characteristic.CPUUsage))
         this.mainService.addCharacteristic(Characteristic.CPUUsage);
         
+      this.mainService.getCharacteristic(Characteristic.CPUUsage)
+        .setProps({
+          format: Characteristic.Formats.FLOAT,
+          unit: Characteristic.Units.PERCENTAGE,
+          minValue: 0,
+          maxValue: 100,
+          minStep: 0.01
+        });
+        
       if(!this.mainService.testCharacteristic(Characteristic.RAMUsage))
         this.mainService.addCharacteristic(Characteristic.RAMUsage);
+        
+      this.mainService.getCharacteristic(Characteristic.RAMUsage)
+        .setProps({
+          format: Characteristic.Formats.FLOAT,
+          unit: Characteristic.Units.PERCENTAGE,
+          minValue: 0,
+          maxValue: 100,
+          minStep: 0.01
+        });
         
       if(this.accessory.context.temperature.active)
         if(!this.mainService.testCharacteristic(Characteristic.CurrentTemperature))
