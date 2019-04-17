@@ -25,9 +25,10 @@ module.exports = {
     // CPUUsage Characteristic
     /// ///////////////////////////////////////////////////////////////////////// 
     Characteristic.CPUUsage = function() {
-      Characteristic.call(this, 'CPU %', '76c9c4e5-23b0-441c-aea6-f2cb680d5a95');
+      Characteristic.call(this, 'CPU', '76c9c4e5-23b0-441c-aea6-f2cb680d5a95');
       this.setProps({
         format: Characteristic.Formats.FLOAT,
+        unit: Characteristic.Units.PERCENTAGE,
         minValue: 0,
         maxValue: 100,
         minStep: 0.01,
@@ -37,6 +38,24 @@ module.exports = {
     };
     inherits(Characteristic.CPUUsage, Characteristic);
     Characteristic.CPUUsage.UUID = '76c9c4e5-23b0-441c-aea6-f2cb680d5a95'; 
+    
+    /// /////////////////////////////////////////////////////////////////////////
+    // MemoryUsage Characteristic
+    /// ///////////////////////////////////////////////////////////////////////// 
+    Characteristic.RAMUsage = function() {
+      Characteristic.call(this, 'RAM', '782a5e2f-a172-4b72-aa57-8408f68cb5e8');
+      this.setProps({
+        format: Characteristic.Formats.FLOAT,
+        unit: Characteristic.Units.PERCENTAGE,
+        minValue: 0,
+        maxValue: 100,
+        minStep: 0.01,
+        perms: [Characteristic.Perms.READ, Characteristic.Perms.NOTIFY]
+      });
+      this.value = this.getDefaultValue();
+    };
+    inherits(Characteristic.RAMUsage, Characteristic);
+    Characteristic.RAMUsage.UUID = '782a5e2f-a172-4b72-aa57-8408f68cb5e8'; 
   
     /// /////////////////////////////////////////////////////////////////////////
     // RunningTime Characteristic
@@ -63,6 +82,7 @@ module.exports = {
       this.addCharacteristic(Characteristic.ServiceStatus);
       this.addCharacteristic(Characteristic.RunningTime);
       this.addCharacteristic(Characteristic.CPUUsage);
+      this.addCharacteristic(Characteristic.RAMUsage);
 
       // Optional Characteristics
       this.addOptionalCharacteristic(Characteristic.Name);
@@ -83,6 +103,8 @@ module.exports = {
       // Optional Characteristics
       this.addOptionalCharacteristic(Characteristic.Name);
       this.addOptionalCharacteristic(Characteristic.CPUUsage);
+      this.addOptionalCharacteristic(Characteristic.RAMUsage);
+      this.addOptionalCharacteristic(Characteristic.CurrentTemperature);
     
     };
     inherits(Service.Switch, Service);
