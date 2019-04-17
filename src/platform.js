@@ -35,7 +35,14 @@ function InstancesPlatform (log, config, api) {
   this.config.showInactives = this.config.showInactives || false;
   this.config.sudo = this.config.sudo || false;
   this.config.clearCache = this.config.clearCache || false;
-
+  this.config.temperature = this.config.temperature || {};
+  
+  this.config.temperature = {
+    active: this.config.temperature.active || false,
+    file: this.config.temperature.file || '/sys/class/thermal/thermal_zone0/temp', 
+    multiplier: this.config.temperature.multiplier || 1000
+  };
+  
   if (api) {
   
     if (api.version < 2.2) {
@@ -104,6 +111,7 @@ InstancesPlatform.prototype = {
     accessory.context.showInactives = this.config.showInactives;
     accessory.context.startParam = this.config.startParam;
     accessory.context.sudo = this.config.sudo;
+    accessory.context.temperature = this.config.temperature;
      
     if(add){
     
@@ -115,7 +123,7 @@ InstancesPlatform.prototype = {
     }
     
     accessory.on('identify', function (paired, callback) {
-      self.logger.info(self.accessory.displayName + ': Hi!');
+      self.logger.info(accessory.displayName + ': Hi!');
       callback();
     });
       
