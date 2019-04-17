@@ -1,11 +1,14 @@
 'use strict';
 
 const { exec } = require('child_process');
+const fs = require('fs');
 
 const LogUtil = require('../lib/LogUtil.js');
 const HomeKitTypes = require('./HomeKit.js');
 
 var Service, Characteristic;
+
+const timeout = ms => new Promise(res => setTimeout(res, ms));
 
 class BridgeAccessory {
   constructor (platform, accessory) {
@@ -76,7 +79,7 @@ class BridgeAccessory {
               this.accessory.context[service.name] = {};
             
             this.mainService.addLinkedService(InstanceService);
-        
+
             this.getService(InstanceService);
           
           }
@@ -108,7 +111,8 @@ class BridgeAccessory {
     return new Promise((resolve, reject) => {
       exec('systemctl list-unit-files | grep enabled | grep ' + this.accessory.context.startParam, (error, stdout, stderr) => {
         if (stderr) return reject(stderr);
-        //if(error) return reject(error)
+        
+        if(error && error.code > 0) return reject('Error with CMD: ' + error.cmd);
       
         let lines = stdout.toString().split('\n');
       
@@ -181,148 +185,196 @@ class BridgeAccessory {
 
       service.getCharacteristic(Characteristic.On)
         .on('set', this.setServiceState.bind(this, service));
-        
-      service.getCharacteristic(Characteristic.CPUUsage)  
-        .on('get', this.getCPUUsage.bind(this, service));
-        
-      service.getCharacteristic(Characteristic.RunningTime)  
-        .on('get', this.getRunningTime.bind(this, service));
-
-      this.getStatus(service);   
     
     } else {
       
       this.mainService.getCharacteristic(Characteristic.On)
-        .on('set', this.setMainServiceState.bind(this))
+        .on('set', this.setMainSwitchState.bind(this))
         .updateValue(false);
         
       if(!this.mainService.testCharacteristic(Characteristic.CPUUsage))
         this.mainService.addCharacteristic(Characteristic.CPUUsage);
-      
-      this.mainService.getCharacteristic(Characteristic.CPUUsage)  
-        .on('get', this.getMainCPUUsage.bind(this));
+        
+      if(!this.mainService.testCharacteristic(Characteristic.RAMUsage))
+        this.mainService.addCharacteristic(Characteristic.RAMUsage);
+        
+      if(this.accessory.context.temperature.active)
+        if(!this.mainService.testCharacteristic(Characteristic.CurrentTemperature))
+          this.mainService.addCharacteristic(Characteristic.CurrentTemperature);
+        
+      this.getAllInformation();
       
     }
 
   }
   
-  getMainCPUUsage(callback){
+  async getAllInformation(){
   
     let overallCpu = 0;
-        
-    this.accessory.services.map( service => {
-      
-      if(service.subtype && service.subtype !== this.accessory.displayName){
+    let overallRam = 0;
+    let parsedServices = [];
     
-        overallCpu += parseFloat(service.getCharacteristic(Characteristic.CPUUsage).value);
-    
-      }
-      
-    });
-    
-    overallCpu = Math.round(overallCpu * 100) / 100;
-    
-    callback(null, overallCpu);
-  
-  }
-  
-  async getStatus(service){
-  
-    try {
-   
-      let state = await this.handleServiceStatus(service);
-   
-      state = (state === 'active') ? true : false;
-   
-      service.getCharacteristic(Characteristic.On)
-        .updateValue(state);
-     
-      service.getCharacteristic(Characteristic.ServiceStatus)
-        .updateValue(state?'active':'inactive');
-    
-    } catch(err){
-    
-      this.logger.error(service.displayName + ': An error occured while getting service state');
-      this.logger.error(err); 
-    
-    } finally {
-    
-      if(this._services.has(service.displayName))
-        setTimeout(this.getStatus.bind(this, service), this.accessory.context.polling);
-    
-    }
-  
-  }
-  
-  async getCPUUsage(service, callback){
-  
-    let cpu;
-  
     try {
     
-      let state = service.getCharacteristic(Characteristic.On).value;
-      
-      if(!state){
-  
-        cpu = 0;
-      
-      } else {
-      
-        this.accessory.context[service.displayName].pid = this.accessory.context[service.displayName].pid||await this.handleServicePIDs(service);       
+      await timeout(2000);
 
-        cpu = await this.handleCPUUsage(this.accessory.context[service.displayName].pid);
+      parsedServices = await this.handleInformations();
+    
+      for(const service of this.accessory.services){
+    
+        let state = false;
+        let cpu = 0;
+        let ram = 0;
+        let time = '-';
+    
+        if(service.subtype && service.subtype !== this.accessory.displayName){
+
+          overallCpu += parseFloat(service.getCharacteristic(Characteristic.CPUUsage).value);
+          overallRam += parseFloat(service.getCharacteristic(Characteristic.RAMUsage).value);
         
-        if(cpu === 'PID changed!'){
+          for(const parsedService of parsedServices){
         
-          this.accessory.context[service.displayName].pid = await this.handleServicePIDs(service);
-          cpu = await this.handleCPUUsage(this.accessory.context[service.displayName].pid);
-      
-          if(cpu === 'PID changed!') cpu = 0; //maybe off?
+            if(parsedService.service === service.subtype){
+
+              state = true;
+              cpu = parseFloat(parsedService.cpu);
+              ram = parseFloat(parsedService.memory);
+              time = parsedService.time;
         
+            }
+        
+          }
+        
+          service.getCharacteristic(Characteristic.On)
+            .updateValue(state);
+     
+          service.getCharacteristic(Characteristic.ServiceStatus)
+            .updateValue(state?'active':'inactive');
+            
+          service.getCharacteristic(Characteristic.CPUUsage)
+            .updateValue(cpu);
+        
+          service.getCharacteristic(Characteristic.RAMUsage)
+            .updateValue(ram);
+        
+          service.getCharacteristic(Characteristic.RunningTime)
+            .updateValue(time);
+    
         }
-        
+    
       }
-      
-      cpu = parseFloat(cpu);
     
-    } catch(err){
+      overallCpu = Math.round(overallCpu * 100) / 100;
+      overallRam = Math.round(overallRam * 100) / 100;
     
-      this.logger.error(service.displayName + ': An error occured while getting cpu usage');
-      this.logger.error(err);
+      this.mainService.getCharacteristic(Characteristic.CPUUsage)
+        .updateValue(overallCpu);
       
-      cpu = 0;
+      this.mainService.getCharacteristic(Characteristic.RAMUsage)
+        .updateValue(overallRam);
+        
+      if(this.accessory.context.temperature.active){
+  
+        let data = fs.readFileSync(this.accessory.context.temperature.file, 'utf-8');
+        let temp = parseFloat(data) / this.accessory.context.temperature.multiplier;
+      
+        this.mainService.getCharacteristic(Characteristic.CurrentTemperature)
+          .updateValue(temp);
+      
+      }
+    
+    } catch(err) {
+    
+      console.log('ERROR');
+      console.log(err);
     
     } finally {
     
-      callback(null, cpu);
+      setTimeout(this.getAllInformation.bind(this), 5000);
     
     }
   
   }
   
-  async getRunningTime(service, callback){
+  handleInformations(){
+
+    return new Promise((resolve, reject) => {
   
-    let runningTime;
-  
-    try {
+      exec('ps -eo pid:1,pmem:1,pcpu:1,etime:1,unit:1,state:1 --no-header | grep homebridge', (error, stdout, stderr) => {
+        if (stderr) return reject(stderr);
+        
+        if(error && error.code > 0) return reject('Error with CMD: ' + error.cmd);
+     
+        let lines = stdout.toString().split('\n');
       
-      let state = service.getCharacteristic(Characteristic.On).value;
+        lines = lines.map( service => {
       
-      !state ? runningTime = '-' : runningTime = await this.handleRunningTime(service);  
-    
-    } catch(err){
-    
-      this.logger.error(service.displayName + ': An error occured while getting running time');
-      this.logger.error(err);
+          let serviceObject;
       
-      runningTime = '-';
+          if(service){
     
-    } finally {
+            service = service.replace(/\s+/g, ',');
+        
+            let time = service.split(',')[3];
+        
+            if(time.indexOf('-') > 0){
+        
+              let day = time.split('-')[0];
+        
+              let clock = time.split('-')[1];
+              let hour = clock.split(':')[0];
+              let min = clock.split(':')[1];
+              //let sec = clock.split(':')[2]
+        
+              time = (day !== '00' ? day + 'd ' : '') + (hour !== '00' ? hour + 'h ' : '') + (min !== '00' ? min + 'm ' : '');
+        
+            } else {
+        
+              let hour, min, sec;
+              
+              if(time.split(':')[2]){
+             
+                hour = time.split(':')[0];
+                min = time.split(':')[1];
+                sec = time.split(':')[2];
+              
+              } else {
+          
+                hour = '00';
+                min = time.split(':')[0];
+                sec = time.split(':')[1];
+              
+              }
+        
+              time = (hour !== '00' ? hour + 'h ' : '') + (min !== '00' ? min + 'm ' : (hour === '00' && min === '00' ? sec + 's' : '') );
+        
+            }
+        
+            serviceObject = {
+              pid: service.split(',')[0],
+              memory: service.split(',')[1],
+              cpu: service.split(',')[2],
+              time: time,
+              service: service.split(',')[4].replace('.service',''),
+              state: service.split(',')[5]
+            };
     
-      callback(null, runningTime);
-    
-    }
-  
+          }
+        
+          if(service && serviceObject && serviceObject.memory !== '0.0' && serviceObject.cpu !== '0.0' && serviceObject.time !== '00:00') return serviceObject;
+      
+        });
+      
+        let services = lines.filter(function (el) {
+          return el != null;
+        });
+      
+        resolve(services);
+      
+      });
+
+    });
+
   }
   
   async setServiceState(service, state, callback){
@@ -346,7 +398,7 @@ class BridgeAccessory {
   
   }
   
-  async setMainServiceState(state, callback){
+  async setMainSwitchState(state, callback){
 
     const self = this;
 
@@ -381,100 +433,6 @@ class BridgeAccessory {
   
     }
   
-  }
-  
-  handleSetCommand(service, state, restart){
-  
-    restart ? state = 'restart ' : state = state ? 'start ' : 'stop ';
-  
-    return new Promise((resolve, reject) => {
-      exec((this.accessory.context.sudo ? 'sudo ' : '') + 'systemctl ' + state + service.subtype, (error, stdout, stderr) => {
-        if (stderr) return reject(stderr);     
-        //if(error) return reject(error)
-      
-        resolve(true);
-      });
-    });
-  
-  }
-  
-  handleServiceStatus(service){
-  
-    return new Promise((resolve, reject) => {
-      exec('systemctl is-active --quiet ' + service.subtype + ' && echo active', (error, stdout, stderr) => {
-        if (stderr) return reject(stderr);     
-        //if(error) return reject(error)
-      
-        stdout = stdout.toString();
-        if(stdout==='') stdout = 'inactive';
-      
-        let lines = stdout.split('\n')[0];
-      
-        resolve(lines);
-      });
-    });
-  
-  }
-  
-  handleRunningTime(service){
-  
-    return new Promise((resolve, reject) => {
-      exec('systemctl status ' + service.subtype + ' -n 0 | grep since', (error, stdout, stderr) => {
-        if (stderr) return reject(stderr);     
-        //if(error) return reject(error)
-      
-        let lines = stdout.toString().split('\n')[0];
-      
-        if(lines){
-          lines = lines.split(';')[1];
-          lines = lines.split('ago')[0];
-        } else {
-          lines = '0s'
-        }
-        
-        resolve(lines);
-      });
-    });
-  
-  }
-  
-  handleServicePIDs(service){
-
-    return new Promise((resolve, reject) => {
-  
-      exec('systemctl status ' + service.subtype + ' -n 0 | grep "Main PID:"', (error, stdout, stderr) => {
-        if (stderr) return reject(stderr);
-     
-        let lines = stdout.toString().split('\n')[0];
-    
-        lines = lines.split(' Main PID: ')[1];
-        lines = lines.split(' (')[0];
-      
-        resolve(lines);
-      
-      });
-
-    });
-
-  }
-  
-  handleCPUUsage(pid){
-
-    return new Promise((resolve, reject) => {
-  
-      exec('ps -p ' + pid + ' -o pcpu --no-headers', (error, stdout, stderr) => {
-        if (stderr) return reject(stderr);
-     
-        let lines = stdout.toString().replace(/\s/g,'').split('\n')[0];
-      
-        if(lines==='')  lines = 'PID changed!';
-      
-        resolve(lines);
-      
-      });
-
-    });
-
   }
   
 }
