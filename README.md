@@ -22,6 +22,8 @@ This plugin supports following functions:
 - **Service Status** shows current state of the homebridge instance (active/inactive)
 - **Running Time** shows current running time of the homebridge instance
 - **CPU Usage** shows CPU usage of all running services
+- **RAM Usage** show RAM usage of all running services
+- **Temperature** shows current CPU temperature
 - **Dynamic** this plugin adds/removes dynamically new enabled/disabled services
 
 ## Installation instructions
@@ -44,15 +46,15 @@ After [Homebridge](https://github.com/nfarina/homebridge) has been installed:
   "platforms": [
     {
       "platform": "InstancesPlatform",
-      "startParam": "homebrige-"
+      "startParam": "homebrige-",
       "clearCache": false,
       "sudo": false,
-      "polling": 5
+      "temperature": {
+        "active": true
+      }
     }
   ]
 }
-}
-
  ```
  See [Example Config](https://github.com/SeydX/homebridge-instances-platform/blob/master/example-config.json) for more details.
 
@@ -66,6 +68,9 @@ After [Homebridge](https://github.com/nfarina/homebridge) has been installed:
 | clearCache | **No** | If true, the accessory will be removed from HomeKit _(Default: false)_ |
 | sudo | **No** | If you have problems starting/stopping an instance, set this true _(Default: false)_|
 | polling | **No** | Polling interval in seconds _(Default: 5s)_ |
+| temperature.active | **No** | Temperature Characteristic for CPU Temperature _(Default: false)_  |
+| temperature.file | **No** | Custom file path to CPU Temperature (eg for Orange PI) |
+| temperature.multiplier | **No** | Custom multiplier (eg for Orange PI) |
 
 
 ## Supported clients
@@ -80,8 +85,6 @@ This plugin has been verified to work with the following apps on iOS 12.2 and iO
 
 
 ## TODO
-- [ ] CPU Temperature
-- [ ] Memory usage
 - [ ] Journalctl
 
 
