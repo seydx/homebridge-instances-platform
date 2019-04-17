@@ -21,6 +21,7 @@ This plugin supports following functions:
 - **Power Switch** Start/Stop Homebridge Instance
 - **Service Status** shows current state of the homebridge instance (active/inactive)
 - **Running Time** shows current running time of the homebridge instance
+- **CPU Usage** shows CPU usage of all running services
 - **Dynamic** this plugin adds/removes dynamically new enabled/disabled services
 
 ## Installation instructions
@@ -76,6 +77,12 @@ This plugin has been verified to work with the following apps on iOS 12.2 and iO
 * All 3rd party apps like Elgato Eve etc. _(recommended)_
 * Homebridge v0.4.48
 * Debian
+
+
+## TODO
+- [ ] CPU Temperature
+- [ ] Memory usage
+- [ ] Journalctl
 
 
 ## Contributing
