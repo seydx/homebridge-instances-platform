@@ -10,7 +10,10 @@
       "platform": "InstancesPlatform",
       "startParam": "homebrige-",
       "clearCache": false,
-      "sudo": false
+      "sudo": false,
+      "temperature": {
+        "active": true
+      }
     }
   ]
 }
