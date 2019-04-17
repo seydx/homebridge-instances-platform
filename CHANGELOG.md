@@ -1,6 +1,13 @@
 # Changelog
 
 
+## 1.2.0 - 2019-04-16
+- Rewritten code for better performance!
+- [NEW] RAM Usage Characteristic
+- [NEW] Temperature Characteristic
+- Bugfixes
+
+
 ## 1.1.2 - 2019-04-16
 - CPU usage improvements
 - Bugfixes
