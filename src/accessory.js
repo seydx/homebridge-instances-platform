@@ -180,6 +180,8 @@ class BridgeAccessory {
   }
 
   getService(service) {
+  
+    const self = this;
     
     if(service){
 
@@ -210,6 +212,12 @@ class BridgeAccessory {
         .on('set', this.setMainSwitchState.bind(this))
         .updateValue(false);
         
+      if(!this.mainService.testCharacteristic(Characteristic.RunningTime))
+        this.mainService.addCharacteristic(Characteristic.RunningTime);
+        
+      this.mainService.getCharacteristic(Characteristic.RunningTime)
+        .on('get', this.getSystemUptime.bind(this));
+        
       if(!this.mainService.testCharacteristic(Characteristic.CPUUsage))
         this.mainService.addCharacteristic(Characteristic.CPUUsage);
         
@@ -234,10 +242,23 @@ class BridgeAccessory {
           minStep: 0.01
         });
         
-      if(this.accessory.context.temperature.active)
+      if(this.accessory.context.temperature.active){
+      
         if(!this.mainService.testCharacteristic(Characteristic.CurrentTemperature))
           this.mainService.addCharacteristic(Characteristic.CurrentTemperature);
-        
+          
+        this.mainService.getCharacteristic(Characteristic.CurrentTemperature)
+          .on('get', function(callback){
+            
+            let data = fs.readFileSync(self.accessory.context.temperature.file, 'utf-8');
+            let temp = parseFloat(data) / self.accessory.context.temperature.multiplier;
+
+            callback(null, temp);
+            
+          });
+      }  
+      
+      
       this.getAllInformation();
       
     }
@@ -248,13 +269,12 @@ class BridgeAccessory {
   
     let overallCpu = 0;
     let overallRam = 0;
-    let parsedServices = [];
-    
+
     try {
     
       await timeout(2000);
 
-      parsedServices = await this.handleInformations();
+      let parsedServices = await this.handleInformations();
     
       for(const service of this.accessory.services){
     
@@ -308,21 +328,11 @@ class BridgeAccessory {
       
       this.mainService.getCharacteristic(Characteristic.RAMUsage)
         .updateValue(overallRam);
-        
-      if(this.accessory.context.temperature.active){
-  
-        let data = fs.readFileSync(this.accessory.context.temperature.file, 'utf-8');
-        let temp = parseFloat(data) / this.accessory.context.temperature.multiplier;
-      
-        this.mainService.getCharacteristic(Characteristic.CurrentTemperature)
-          .updateValue(temp);
-      
-      }
     
     } catch(err) {
     
-      console.log('ERROR');
-      console.log(err);
+      this.logger.error(this.accessory.displayName + ': An error occured while fetching service informations!');
+      this.logger.error(err);
     
     } finally {
     
@@ -468,6 +478,59 @@ class BridgeAccessory {
       callback();
   
     }
+  
+  }
+  
+  async getSystemUptime(callback){
+  
+    let uptime = '-';
+  
+    try {
+    
+      let sys = await this.handleUptime();
+      
+      sys = sys.split('up ')[1];
+      uptime = sys.split(',')[0];
+    
+    } catch(err) {
+    
+      this.logger.error(this.accessory.displayName + ': An error occured while getting system uptime!');
+      this.logger.error(err);
+    
+    } finally {
+    
+      callback(null, uptime);
+    
+    }
+  
+  }
+  
+  handleUptime(){
+  
+    return new Promise((resolve, reject) => {
+      exec('uptime', (error, stdout, stderr) => {
+        if (stderr) return reject(stderr);
+        
+        if(error && error.code > 0) return reject('Error with CMD: ' + error.cmd);
+      
+        resolve(stdout.toString());
+      });
+    });
+  
+  }
+  
+  handleSetCommand(service, state, restart){
+  
+    restart ? state = 'restart ' : state = state ? 'start ' : 'stop ';
+  
+    return new Promise((resolve, reject) => {
+      exec((this.accessory.context.sudo ? 'sudo ' : '') + 'systemctl ' + state + service.subtype, (error, stdout, stderr) => {
+        if (stderr) return reject(stderr);     
+        //if(error) return reject(error)
+      
+        resolve(true);
+      });
+    });
   
   }
   
