@@ -104,6 +104,7 @@ module.exports = {
       this.addOptionalCharacteristic(Characteristic.Name);
       this.addOptionalCharacteristic(Characteristic.CPUUsage);
       this.addOptionalCharacteristic(Characteristic.RAMUsage);
+      this.addOptionalCharacteristic(Characteristic.RunningTime);
       this.addOptionalCharacteristic(Characteristic.CurrentTemperature);
     
     };
