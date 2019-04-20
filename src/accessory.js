@@ -110,9 +110,9 @@ class BridgeAccessory {
   
     return new Promise((resolve, reject) => {
       exec('systemctl list-unit-files | grep enabled | grep ' + this.accessory.context.startParam, (error, stdout, stderr) => {
-        if (stderr) return reject(stderr);
         
         if(error && error.code > 0) return reject('Error with CMD: ' + error.cmd);
+        if(stderr) return reject(stderr);
       
         let lines = stdout.toString().split('\n');
       
@@ -347,9 +347,9 @@ class BridgeAccessory {
     return new Promise((resolve, reject) => {
   
       exec('ps -eo pid:1,pmem:1,pcpu:1,etime:1,unit:1,state:1 --no-header | grep homebridge', (error, stdout, stderr) => {
-        if (stderr) return reject(stderr);
         
         if(error && error.code > 0) return reject('Error with CMD: ' + error.cmd);
+        if(stderr) return reject(stderr);
      
         let lines = stdout.toString().split('\n');
       
@@ -487,10 +487,7 @@ class BridgeAccessory {
   
     try {
     
-      let sys = await this.handleUptime();
-      
-      sys = sys.split('up ')[1];
-      uptime = sys.split(',')[0];
+      uptime = await this.handleUptime();
     
     } catch(err) {
     
@@ -508,13 +505,50 @@ class BridgeAccessory {
   handleUptime(){
   
     return new Promise((resolve, reject) => {
-      exec('uptime', (error, stdout, stderr) => {
-        if (stderr) return reject(stderr);
+  
+      exec('uptime -p', function(error, stdout, stderr){
         
         if(error && error.code > 0) return reject('Error with CMD: ' + error.cmd);
+        if(stderr) return reject(stderr);
+        
+        stdout = stdout.toString().split('\n')[0];
+        stdout = stdout.split('up ')[1];  
+        stdout = stdout.split(',');
+    
+        let uptime = ''
+  
+        stdout.map( time => {
+    
+        if(time) {
       
-        resolve(stdout.toString());
+          if(time.includes('day')){
+            time = time.split(' day')[0]; 
+            uptime += time + 'D';
+          }
+         
+          if(time.includes('hour')){
+            time = time.split(' hour')[0]; 
+            uptime += time + 'H';
+          }
+         
+          if(time.includes('minute')){
+            time = time.split(' minute')[0]; 
+            uptime += time + 'M';
+          }
+        
+          if(time.includes('second')){
+            time = time.split(' second')[0]; 
+            uptime += time + 'S';
+          }
+      
+        }
+      
       });
+    
+      resolve(uptime);
+    
+      });
+  
     });
   
   }
@@ -525,8 +559,9 @@ class BridgeAccessory {
   
     return new Promise((resolve, reject) => {
       exec((this.accessory.context.sudo ? 'sudo ' : '') + 'systemctl ' + state + service.subtype, (error, stdout, stderr) => {
-        if (stderr) return reject(stderr);     
-        //if(error) return reject(error)
+        
+        if(error && error.code > 0) return reject('Error with CMD: ' + error.cmd);
+        if(stderr) return reject(stderr);
       
         resolve(true);
       });
