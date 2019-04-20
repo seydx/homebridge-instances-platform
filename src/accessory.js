@@ -1,7 +1,10 @@
 'use strict';
 
 const { exec } = require('child_process');
+const { lstatSync, readdirSync } = require('fs');
+
 const fs = require('fs');
+const latestVersion = require('latest-version');
 
 const LogUtil = require('../lib/LogUtil.js');
 const HomeKitTypes = require('./HomeKit.js');
@@ -45,6 +48,7 @@ class BridgeAccessory {
       
       this._activeServices = new Map();
       
+      this.accessory.context.path = await this.getNpmPath();
       let services = await this.handleServices();
       
       for(const service of services){
@@ -104,6 +108,25 @@ class BridgeAccessory {
     }
 
   
+  }
+  
+  getNpmPath(){
+
+    return new Promise((resolve, reject) =>{
+     
+      exec('npm root -g', function(error, stdout, stderr){
+    
+        if(error && error.code > 0) return reject('Error with CMD: ' + error.cmd);
+        if(stderr) return reject(stderr);
+      
+        let lines = stdout.split('\n')[0];
+      
+        resolve(lines);
+    
+      });
+  
+    });
+
   }
   
   handleServices(){
@@ -211,6 +234,33 @@ class BridgeAccessory {
       this.mainService.getCharacteristic(Characteristic.On)
         .on('set', this.setMainSwitchState.bind(this))
         .updateValue(false);
+        
+      if(!this.mainService.testCharacteristic(Characteristic.Updatable))
+        this.mainService.addCharacteristic(Characteristic.Updatable);
+        
+      this.mainService.getCharacteristic(Characteristic.Updatable)
+        .on('get', async function(callback){
+        
+          let updatable = [];
+          
+          for(const name of readdirSync(this.accessory.context.path + '/')){
+  
+            if(lstatSync(this.accessory.context.path + '/' + name).isDirectory() && name.includes('homebridge')){
+      
+              let version = require(this.accessory.context.path + '/' + name +'/package.json').version;
+              let newVersion = await latestVersion(name);
+        
+              if(this.checkVersions(version, newVersion)) updatable.push(name);
+      
+            }
+  
+          }
+      
+          let pluginUpdates = updatable.length ? updatable.length.toString() : 'Up to date!';
+          
+          callback(null, pluginUpdates);
+      
+        });
         
       if(!this.mainService.testCharacteristic(Characteristic.RunningTime))
         this.mainService.addCharacteristic(Characteristic.RunningTime);
@@ -423,6 +473,20 @@ class BridgeAccessory {
 
   }
   
+  checkVersions(currentVersion, newVersion){
+
+    currentVersion = currentVersion.split('.');
+    newVersion = newVersion.split('.');
+  
+    for(let index = 0; index <= 2; index++){
+      if(parseInt(newVersion[index]) > parseInt(currentVersion[index]))
+        return true;
+    }
+  
+    return false;
+
+  }
+  
   async setServiceState(service, state, callback){
   
     try {
@@ -515,37 +579,37 @@ class BridgeAccessory {
         stdout = stdout.split('up ')[1];  
         stdout = stdout.split(',');
     
-        let uptime = ''
+        let uptime = '';
   
         stdout.map( time => {
     
-        if(time) {
+          if(time) {
       
-          if(time.includes('day')){
-            time = time.split(' day')[0]; 
-            uptime += time + 'D';
-          }
+            if(time.includes('day')){
+              time = time.split(' day')[0]; 
+              uptime += time + 'D';
+            }
          
-          if(time.includes('hour')){
-            time = time.split(' hour')[0]; 
-            uptime += time + 'H';
-          }
+            if(time.includes('hour')){
+              time = time.split(' hour')[0]; 
+              uptime += time + 'H';
+            }
          
-          if(time.includes('minute')){
-            time = time.split(' minute')[0]; 
-            uptime += time + 'M';
-          }
+            if(time.includes('minute')){
+              time = time.split(' minute')[0]; 
+              uptime += time + 'M';
+            }
         
-          if(time.includes('second')){
-            time = time.split(' second')[0]; 
-            uptime += time + 'S';
+            if(time.includes('second')){
+              time = time.split(' second')[0]; 
+              uptime += time + 'S';
+            }
+      
           }
       
-        }
-      
-      });
+        });
     
-      resolve(uptime);
+        resolve(uptime);
     
       });
   
