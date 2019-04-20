@@ -22,6 +22,20 @@ module.exports = {
     Characteristic.ServiceStatus.UUID = '0258a1bf-6b32-470d-aa92-ba340eee4441';   
     
     /// /////////////////////////////////////////////////////////////////////////
+    // Updatable Characteristic
+    /// ///////////////////////////////////////////////////////////////////////// 
+    Characteristic.Updatable = function() {
+      Characteristic.call(this, 'Updatable Plugins', '7a95059c-f154-463f-95ee-527dbd123e8b');
+      this.setProps({
+        format: Characteristic.Formats.STRING,
+        perms: [Characteristic.Perms.READ, Characteristic.Perms.NOTIFY]
+      });
+      this.value = this.getDefaultValue();
+    };
+    inherits(Characteristic.Updatable, Characteristic);
+    Characteristic.Updatable.UUID = '7a95059c-f154-463f-95ee-527dbd123e8b';   
+    
+    /// /////////////////////////////////////////////////////////////////////////
     // CPUUsage Characteristic
     /// ///////////////////////////////////////////////////////////////////////// 
     Characteristic.CPUUsage = function() {
@@ -105,6 +119,7 @@ module.exports = {
       this.addOptionalCharacteristic(Characteristic.CPUUsage);
       this.addOptionalCharacteristic(Characteristic.RAMUsage);
       this.addOptionalCharacteristic(Characteristic.RunningTime);
+      this.addOptionalCharacteristic(Characteristic.Updatable);
       this.addOptionalCharacteristic(Characteristic.CurrentTemperature);
     
     };
