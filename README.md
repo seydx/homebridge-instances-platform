@@ -12,7 +12,7 @@
 
 **Creating and maintaining Homebridge plugins consume a lot of time and effort, if you would like to share your appreciation, feel free to "Star" or donate.**
 
-<img src="https://i.ibb.co/GsDdYCh/C7-B78-A3-F-3589-44-F2-9-A49-15-A9760-FF20-D.gif" align="right" alt="HomeKit Overview" width="270px" height="541px">
+<img src="https://imgur.com/WbPfcnV.gif" align="right" alt="HomeKit Overview" width="270px" height="541px">
 
 This is a plugin for [Homebridge](https://github.com/nfarina/homebridge) to control your **multiple homebridge instances**. 
 
