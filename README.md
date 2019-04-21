@@ -3,7 +3,7 @@
 </p>
 
 
-# Instances!Platform v1
+# Instances!Platform v1.3
 
 [![npm](https://img.shields.io/npm/v/homebridge-instances-platform.svg?style=flat-square)](https://www.npmjs.com/package/homebridge-instances-platform)
 [![npm](https://img.shields.io/npm/dt/homebridge-instances-platform.svg?style=flat-square)](https://www.npmjs.com/package/homebridge-instances-platform)
