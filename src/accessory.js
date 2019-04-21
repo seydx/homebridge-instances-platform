@@ -399,9 +399,9 @@ class BridgeAccessory {
         
           let version = rawdata.version;
         
-          let newVersion = await latestVersion(name);
+          let newVersion = await this.checkNpmPlugin(name);
         
-          if(this.checkVersions(version, newVersion)) {
+          if(newVersion && this.checkVersions(version, newVersion)) {
             this.logger.info(this.accessory.displayName + ': ' + name + ' [' + version + '] - ' + ' New version available [' + newVersion + ']');
             this.updatable.push(name);
           }
@@ -414,14 +414,8 @@ class BridgeAccessory {
     
     } catch(err) {
     
-      let error = err.toString();
-    
-      if(!error.includes('PackageNotFoundError')){
-      
-        this.logger.error(this.accessory.displayName + ': An error occured while fetching plugin states!');
-        this.logger.error(err);
-      
-      }
+      this.logger.error(this.accessory.displayName + ': An error occured while fetching plugin states!');
+      this.logger.error(err);
     
     } finally {
     
@@ -431,6 +425,32 @@ class BridgeAccessory {
     
     }
 
+  }
+  
+  async checkNpmPlugin(plugin){
+  
+    try {
+    
+      let newVersion = await latestVersion(plugin);
+      
+      return newVersion;
+    
+    } catch(err) {
+    
+      let error = err.toString();
+    
+      if(!error.includes('PackageNotFoundError')){
+      
+        throw err; 
+      
+      } else {
+      
+        return false;
+      
+      }
+    
+    }
+  
   }
   
   async getDiskSpace(callback){
