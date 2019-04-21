@@ -1,5 +1,5 @@
 /**
- * v1.0
+ * v1.3
  *
  * @url https://github.com/SeydX/homebridge-instances-platform
  * @author SeydX <seyd55@outlook.de>
