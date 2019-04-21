@@ -23,6 +23,7 @@ This plugin supports following functions:
 - **Uptime:** Shows uptime of the computer
 - **CPU Usage:** Shows summarized CPU usage of all detected services
 - **RAM Usage:** Shows summarized CPU usage of all detected services
+- **Disk Space:** Shows available disk space
 - **Updatable Plugins:** Shows size of updatable plugins and extra switch to update all plugins
 
 **Services:**
