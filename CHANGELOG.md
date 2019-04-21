@@ -1,6 +1,10 @@
 # Changelog
 
 
+## 1.3.4
+- [NEW] Available Disk Space for Main Switch
+
+
 ## 1.3.3 - 2019-04-21
 - Bugfixes
 
