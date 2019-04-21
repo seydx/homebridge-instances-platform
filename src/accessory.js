@@ -28,7 +28,6 @@ class BridgeAccessory {
     this.config = platform.config;
     this.accessories = platform.accessories;
     this._services = new Map();
-    this.packageWarn = [];
     
     this.accessory = accessory;
     this.mainService = this.accessory.getService(Service.Switch, this.accessory.displayName);
