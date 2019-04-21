@@ -380,7 +380,7 @@ class BridgeAccessory {
   async getPluginState(callback){
   
     this.updatable = [];
-    let pluginUpdates = 'Up to date';
+    let pluginUpdates = '';
   
     try {
     
@@ -404,7 +404,6 @@ class BridgeAccessory {
   
       }
       
-      pluginUpdates = this.updatable.length.toString();
       if(this.updatable.length) this.logger.info(this.accessory.displayName + ': New Updates available! Click "Update Plugins" to update the plugins!');
     
     } catch(err) {
@@ -419,6 +418,8 @@ class BridgeAccessory {
       }
     
     } finally {
+    
+      pluginUpdates = this.updatable.length ? this.updatable.length.toString() : 'Up to date';
     
       callback(null, pluginUpdates);
     
@@ -681,6 +682,21 @@ class BridgeAccessory {
         stdout.map( time => {
     
           if(time) {
+          
+            if(time.includes('year')){
+              time = time.split(' year')[0]; 
+              uptime += time + 'Y';
+            }
+          
+            if(time.includes('month')){
+              time = time.split(' month')[0]; 
+              uptime += time + 'Mo';
+            }
+          
+            if(time.includes('week')){
+              time = time.split(' week')[0]; 
+              uptime += time + 'W';
+            }
       
             if(time.includes('day')){
               time = time.split(' day')[0]; 
