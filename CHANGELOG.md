@@ -1,6 +1,10 @@
 # Changelog
 
 
+## 1.3.2 - 2019-04-21
+- Bugfixes
+
+
 ## 1.3.0 - 2019-04-21
 - [NEW] Updatable Plugins
 - [NEW] Switch for update all plugins
