@@ -86,6 +86,20 @@ module.exports = {
     Characteristic.RunningTime.UUID = '03d42db4-8b9c-4b43-b45d-88a59450f2d9'; 
     
     /// /////////////////////////////////////////////////////////////////////////
+    // DiskSpace Characteristic
+    /// ///////////////////////////////////////////////////////////////////////// 
+    Characteristic.DiskSpace = function() {
+      Characteristic.call(this, 'Free Disk Space', 'c4a3856e-5995-4d4f-affd-144d4444b45e');
+      this.setProps({
+        format: Characteristic.Formats.STRING,
+        perms: [Characteristic.Perms.READ, Characteristic.Perms.NOTIFY]
+      });
+      this.value = this.getDefaultValue();
+    };
+    inherits(Characteristic.DiskSpace, Characteristic);
+    Characteristic.DiskSpace.UUID = 'c4a3856e-5995-4d4f-affd-144d4444b45e'; 
+    
+    /// /////////////////////////////////////////////////////////////////////////
     // UpdatePlugins Characteristic
     /// ///////////////////////////////////////////////////////////////////////// 
     Characteristic.UpdatePlugins = function() {
@@ -133,6 +147,7 @@ module.exports = {
       this.addOptionalCharacteristic(Characteristic.CPUUsage);
       this.addOptionalCharacteristic(Characteristic.RAMUsage);
       this.addOptionalCharacteristic(Characteristic.RunningTime);
+      this.addOptionalCharacteristic(Characteristic.DiskSpace);
       this.addOptionalCharacteristic(Characteristic.Updatable);
       this.addOptionalCharacteristic(Characteristic.UpdatePlugins);
       this.addOptionalCharacteristic(Characteristic.CurrentTemperature);
