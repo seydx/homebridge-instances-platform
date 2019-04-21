@@ -14,7 +14,7 @@
 
 <img src="https://raw.githubusercontent.com/SeydX/homebridge-instances-platform/master/images/69E0F798-BCB6-4F15-B279-7C44AE311FC6.gif" align="right" alt="HomeKit Overview" width="270px" height="541px">
 
-This is a plugin for [Homebridge](https://github.com/nfarina/homebridge) to control your **multiple homebridge instances**. 
+This is a dynamic platform plugin for [Homebridge](https://github.com/nfarina/homebridge) to control your **homebridge instance(s)**. It is capable to dynamically add or remove services, depending on if service is enabled or disabled!
 
 This plugin supports following functions:
 
@@ -31,8 +31,6 @@ This plugin supports following functions:
 - **Service Uptime:** Shows current uptime of the homebridge instance
 - **Service CPU Usage:** Shows CPU usage of all running services
 - **Service RAM Usage:** Show RAM usage of all running services
-
-This is a dynamic platform plugin and it is capable to dynamically add or remove services, depending on if service is enabled or disabled!
 
 ## Installation instructions
 
