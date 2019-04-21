@@ -18,14 +18,21 @@ This is a plugin for [Homebridge](https://github.com/nfarina/homebridge) to cont
 
 This plugin supports following functions:
 
-- **Power Switch** Start/Stop Homebridge Instance
-- **Service Status** shows current state of the homebridge instance (active/inactive)
-- **Running Time** shows current running time of the homebridge instance
-- **CPU Usage** shows CPU usage of all running services
-- **RAM Usage** show RAM usage of all running services
-- **Temperature** shows current CPU temperature
-- **Updatable Plugins** shows size of updatable plugins and switch to update all plugins
-- **Dynamic** this plugin adds/removes dynamically new enabled/disabled services
+**Main Switch:**
+- **Temperature:** Shows current CPU temperature
+- **Uptime:** Shows uptime of the computer
+- **CPU Usage:** Shows summarized CPU usage of all detected services
+- **RAM Usage:** Shows summarized CPU usage of all detected services
+- **Updatable Plugins:** Shows size of updatable plugins and extra switch to update all plugins
+
+**Services:**
+- **Service Power Switch:** Start/Stop Homebridge Instance
+- **Service Status:** Shows current state of the homebridge instance (active/inactive)
+- **Service Uptime:** Shows current uptime of the homebridge instance
+- **Service CPU Usage:** Shows CPU usage of all running services
+- **Service RAM Usage:** Show RAM usage of all running services
+
+This is a dynamic platform plugin and it is capable to dynamically add or remove services, depending on if service is enabled or disabled!
 
 ## Installation instructions
 
@@ -83,10 +90,6 @@ This plugin has been verified to work with the following apps on iOS 12.2 and iO
 * All 3rd party apps like Elgato Eve etc. _(recommended)_
 * Homebridge v0.4.48
 * Debian
-
-
-## TODO
-- [ ] Journalctl
 
 
 ## Contributing
