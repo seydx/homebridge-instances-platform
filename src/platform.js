@@ -31,7 +31,7 @@ function InstancesPlatform (log, config, api) {
   this.config = config;
   
   this.config.polling = this.config.polling * 1000||5000;
-  this.config.startParam = this.config.startParam || 'homebridge-';
+  this.config.startParam = this.config.startParam || 'home';
   this.config.showInactives = this.config.showInactives || false;
   this.config.sudo = this.config.sudo || false;
   this.config.clearCache = this.config.clearCache || false;
