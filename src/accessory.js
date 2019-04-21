@@ -113,7 +113,6 @@ class BridgeAccessory {
   getNpmPath(){
 
     return new Promise((resolve, reject) =>{
-     
       exec('npm root -g', function(error, stdout, stderr){
     
         if(error && error.code > 0) return reject('Error with CMD: ' + error.cmd);
@@ -124,7 +123,6 @@ class BridgeAccessory {
         resolve(lines);
     
       });
-  
     });
 
   }
@@ -239,28 +237,15 @@ class BridgeAccessory {
         this.mainService.addCharacteristic(Characteristic.Updatable);
         
       this.mainService.getCharacteristic(Characteristic.Updatable)
-        .on('get', async function(callback){
+        .on('get', this.getPluginState.bind(this));
         
-          let updatable = [];
-          
-          for(const name of readdirSync(this.accessory.context.path + '/')){
-  
-            if(lstatSync(this.accessory.context.path + '/' + name).isDirectory() && name.includes('homebridge')){
-      
-              let version = require(this.accessory.context.path + '/' + name +'/package.json').version;
-              let newVersion = await latestVersion(name);
+      if(!this.mainService.testCharacteristic(Characteristic.UpdatePlugins))
+        this.mainService.addCharacteristic(Characteristic.UpdatePlugins);
         
-              if(this.checkVersions(version, newVersion)) updatable.push(name);
-      
-            }
-  
-          }
-      
-          let pluginUpdates = updatable.length ? updatable.length.toString() : 'Up to date!';
-          
-          callback(null, pluginUpdates);
-      
-        });
+      this.mainService.getCharacteristic(Characteristic.UpdatePlugins)
+        .updateValue(false)
+        .on('get', callback => callback(null, false))
+        .on('set', this.updatePlugins.bind(this));
         
       if(!this.mainService.testCharacteristic(Characteristic.RunningTime))
         this.mainService.addCharacteristic(Characteristic.RunningTime);
@@ -298,7 +283,7 @@ class BridgeAccessory {
           this.mainService.addCharacteristic(Characteristic.CurrentTemperature);
           
         this.mainService.getCharacteristic(Characteristic.CurrentTemperature)
-          .on('get', function(callback){
+          .on('get', callback => {
             
             let data = fs.readFileSync(self.accessory.context.temperature.file, 'utf-8');
             let temp = parseFloat(data) / self.accessory.context.temperature.multiplier;
@@ -392,10 +377,107 @@ class BridgeAccessory {
   
   }
   
+  async getPluginState(callback){
+  
+    this.updatable = [];
+          
+    for(const name of readdirSync(this.accessory.context.path + '/')){
+  
+      if(lstatSync(this.accessory.context.path + '/' + name).isDirectory() && name.includes('homebridge')){
+        
+        let rawdata = fs.readFileSync(this.accessory.context.path + '/' + name + '/package.json');  
+        rawdata = JSON.parse(rawdata);
+        
+        let version = rawdata.version;
+        
+        let newVersion = await latestVersion(name);
+        
+        if(this.checkVersions(version, newVersion)) {
+          this.logger.info(this.accessory.displayName + ': ' + name + ' [' + version + '] - ' + ' New version available [' + newVersion + ']');
+          this.updatable.push(name);
+        }
+      
+      }
+  
+    }
+    
+    if(this.updatable.length) this.logger.info(this.accessory.displayName + ': New Updates available! Click "Update Plugins" to update the plugins!');
+      
+    let pluginUpdates = this.updatable.length ? this.updatable.length.toString() : 'Up to date';
+          
+    callback(null, pluginUpdates);
+  
+  }
+  
+  async updatePlugins(state, callback){
+  
+    const self = this;
+    
+    setTimeout(function(){ 
+      self.mainService.getCharacteristic(Characteristic.UpdatePlugins)
+        .updateValue(false); 
+    }, 500);
+    
+    callback();
+  
+    try {
+    
+      if(state){
+    
+        if(this.updatable.length){
+        
+          for(const plugin of this.updatable){
+          
+            this.logger.info(this.accessory.displayName + ': Updating ' + plugin);
+            
+            await this.updateAll(plugin);
+            
+            this.updatable.splice( this.updatable.indexOf(plugin), 1 );
+            this.logger.info(this.accessory.displayName + ': Done (' + plugin + ')');
+          
+          }
+        
+        } else {
+        
+          this.logger.info(this.accessory.displayName + ': All plugins up to date!');
+        
+        }
+      
+      }
+    
+    } catch(err) {
+    
+      this.logger.error(this.accessory.displayName + ': An error occured while updating plugins!');
+      this.logger.error(err);
+    
+    } finally {
+    
+      let pluginUpdates = this.updatable.length ? this.updatable.length.toString() : 'Up to date';
+    
+      self.mainService.getCharacteristic(Characteristic.Updatable)
+        .updateValue(pluginUpdates); 
+ 
+    }
+  
+  }
+  
+  updateAll(plugin){
+  
+    return new Promise((resolve, reject) => {
+      exec((this.accessory.context.sudo ? 'sudo ' : '') + 'npm install -g ' + plugin + '@latest', (error, stdout, stderr) => {
+        
+        if(error && error.code > 0) return reject('Error with CMD: ' + error.cmd);
+        if(stderr) return reject(stderr);
+      
+        resolve(true);
+      });
+    });
+  
+  }
+  
   handleInformations(){
 
     return new Promise((resolve, reject) => {
-  
       exec('ps -eo pid:1,pmem:1,pcpu:1,etime:1,unit:1,state:1 --no-header | grep homebridge', (error, stdout, stderr) => {
         
         if(error && error.code > 0) return reject('Error with CMD: ' + error.cmd);
@@ -468,7 +550,6 @@ class BridgeAccessory {
         resolve(services);
       
       });
-
     });
 
   }
@@ -569,7 +650,6 @@ class BridgeAccessory {
   handleUptime(){
   
     return new Promise((resolve, reject) => {
-  
       exec('uptime -p', function(error, stdout, stderr){
         
         if(error && error.code > 0) return reject('Error with CMD: ' + error.cmd);
@@ -612,7 +692,6 @@ class BridgeAccessory {
         resolve(uptime);
     
       });
-  
     });
   
   }
