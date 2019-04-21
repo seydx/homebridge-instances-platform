@@ -233,6 +233,12 @@ class BridgeAccessory {
         .on('set', this.setMainSwitchState.bind(this))
         .updateValue(false);
         
+      if(!this.mainService.testCharacteristic(Characteristic.DiskSpace))
+        this.mainService.addCharacteristic(Characteristic.DiskSpace);
+        
+      this.mainService.getCharacteristic(Characteristic.DiskSpace)
+        .on('get', this.getDiskSpace.bind(this));
+        
       if(!this.mainService.testCharacteristic(Characteristic.Updatable))
         this.mainService.addCharacteristic(Characteristic.Updatable);
         
@@ -425,6 +431,44 @@ class BridgeAccessory {
     
     }
 
+  }
+  
+  async getDiskSpace(callback){
+  
+    let disk;
+  
+    try {
+    
+      disk = await this.getDisk();
+    
+    } catch(err) {
+    
+      this.logger.error(this.accessory.displayName + ': An error occured whille getting disk space!');
+      this.logger.error(err);
+    
+    } finally {
+    
+      callback(null, disk);
+    
+    }
+  
+  }
+  
+  getDisk(){
+  
+    return new Promise((resolve, reject) => {
+      exec('df --output=avail -h /', (error, stdout, stderr) => {
+        
+        if(error && error.code > 0) return reject('Error with CMD: ' + error.cmd);
+        if(stderr) return reject(stderr);
+        
+        stdout = stdout.toString().split('\n')[1];
+        stdout = stdout.replace(/\s+/g, '');
+      
+        resolve(stdout);
+      });
+    });
+  
   }
   
   async updatePlugins(state, callback){
