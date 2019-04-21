@@ -28,6 +28,7 @@ class BridgeAccessory {
     this.config = platform.config;
     this.accessories = platform.accessories;
     this._services = new Map();
+    this.packageWarn = [];
     
     this.accessory = accessory;
     this.mainService = this.accessory.getService(Service.Switch, this.accessory.displayName);
@@ -380,33 +381,50 @@ class BridgeAccessory {
   async getPluginState(callback){
   
     this.updatable = [];
-          
-    for(const name of readdirSync(this.accessory.context.path + '/')){
+    let pluginUpdates = 'Up to date';
   
-      if(lstatSync(this.accessory.context.path + '/' + name).isDirectory() && name.includes('homebridge')){
+    try {
+    
+      for(const name of readdirSync(this.accessory.context.path + '/')){
+  
+        if(lstatSync(this.accessory.context.path + '/' + name).isDirectory() && name.includes('homebridge')){
         
-        let rawdata = fs.readFileSync(this.accessory.context.path + '/' + name + '/package.json');  
-        rawdata = JSON.parse(rawdata);
+          let rawdata = fs.readFileSync(this.accessory.context.path + '/' + name + '/package.json');  
+          rawdata = JSON.parse(rawdata);
         
-        let version = rawdata.version;
+          let version = rawdata.version;
         
-        let newVersion = await latestVersion(name);
+          let newVersion = await latestVersion(name);
         
-        if(this.checkVersions(version, newVersion)) {
-          this.logger.info(this.accessory.displayName + ': ' + name + ' [' + version + '] - ' + ' New version available [' + newVersion + ']');
-          this.updatable.push(name);
+          if(this.checkVersions(version, newVersion)) {
+            this.logger.info(this.accessory.displayName + ': ' + name + ' [' + version + '] - ' + ' New version available [' + newVersion + ']');
+            this.updatable.push(name);
+          }
+      
         }
+  
+      }
+      
+      pluginUpdates = this.updatable.length.toString();
+      if(this.updatable.length) this.logger.info(this.accessory.displayName + ': New Updates available! Click "Update Plugins" to update the plugins!');
+    
+    } catch(err) {
+    
+      let error = err.toString();
+    
+      if(!error.includes('PackageNotFoundError')){
+      
+        this.logger.error(this.accessory.displayName + ': An error occured while fetching plugin states!');
+        this.logger.error(err);
       
       }
-  
-    }
     
-    if(this.updatable.length) this.logger.info(this.accessory.displayName + ': New Updates available! Click "Update Plugins" to update the plugins!');
-      
-    let pluginUpdates = this.updatable.length ? this.updatable.length.toString() : 'Up to date';
-          
-    callback(null, pluginUpdates);
-  
+    } finally {
+    
+      callback(null, pluginUpdates);
+    
+    }
+
   }
   
   async updatePlugins(state, callback){
