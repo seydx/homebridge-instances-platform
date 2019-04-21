@@ -112,7 +112,7 @@ InstancesPlatform.prototype = {
     accessory.context.startParam = this.config.startParam;
     accessory.context.sudo = this.config.sudo;
     accessory.context.temperature = this.config.temperature;
-     
+
     if(add){
     
       this.logger.info('Registering platform accessory: ' + accessory.displayName);
