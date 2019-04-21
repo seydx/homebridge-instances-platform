@@ -24,6 +24,7 @@ This plugin supports following functions:
 - **CPU Usage** shows CPU usage of all running services
 - **RAM Usage** show RAM usage of all running services
 - **Temperature** shows current CPU temperature
+- **Updatable Plugins** shows size of updatable plugins and switch to update all plugins
 - **Dynamic** this plugin adds/removes dynamically new enabled/disabled services
 
 ## Installation instructions
