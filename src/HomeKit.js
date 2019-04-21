@@ -83,7 +83,21 @@ module.exports = {
       this.value = this.getDefaultValue();
     };
     inherits(Characteristic.RunningTime, Characteristic);
-    Characteristic.RunningTime.UUID = '03d42db4-8b9c-4b43-b45d-88a59450f2d9';  
+    Characteristic.RunningTime.UUID = '03d42db4-8b9c-4b43-b45d-88a59450f2d9'; 
+    
+    /// /////////////////////////////////////////////////////////////////////////
+    // UpdatePlugins Characteristic
+    /// ///////////////////////////////////////////////////////////////////////// 
+    Characteristic.UpdatePlugins = function() {
+      Characteristic.call(this, 'Update Plugins', 'f01b98d1-d183-46a8-beab-afa169031335');
+      this.setProps({
+        format: Characteristic.Formats.BOOL,
+        perms: [Characteristic.Perms.READ, Characteristic.Perms.WRITE, Characteristic.Perms.NOTIFY]
+      });
+      this.value = this.getDefaultValue();
+    };
+    inherits(Characteristic.UpdatePlugins, Characteristic);
+    Characteristic.UpdatePlugins.UUID = 'f01b98d1-d183-46a8-beab-afa169031335';  
     
     /// /////////////////////////////////////////////////////////////////////////
     // Instances Service
@@ -120,6 +134,7 @@ module.exports = {
       this.addOptionalCharacteristic(Characteristic.RAMUsage);
       this.addOptionalCharacteristic(Characteristic.RunningTime);
       this.addOptionalCharacteristic(Characteristic.Updatable);
+      this.addOptionalCharacteristic(Characteristic.UpdatePlugins);
       this.addOptionalCharacteristic(Characteristic.CurrentTemperature);
     
     };
