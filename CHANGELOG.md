@@ -1,6 +1,10 @@
 # Changelog
 
 
+## 1.3.5
+- Bugfixes
+
+
 ## 1.3.4
 - [NEW] Available Disk Space for Main Switch
 
