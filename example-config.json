@@ -8,7 +8,7 @@
   "platforms": [
     {
       "platform": "InstancesPlatform",
-      "startParam": "homebrige-",
+      "startParam": "home",
       "clearCache": false,
       "sudo": false,
       "temperature": {
