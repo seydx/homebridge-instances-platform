@@ -1,6 +1,12 @@
 # Changelog
 
 
+## 1.4.1 - 2019-04-22
+- [NEW] Added spamInterval to notifier
+- [NEW] Added Filter to notifier
+- Bugfixes
+
+
 ## 1.4.0 - 2019-04-22
 - [NEW] Listener for homebridge services with telegram notification if an error occures
 - Bugfixes
