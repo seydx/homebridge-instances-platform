@@ -43,6 +43,15 @@ function InstancesPlatform (log, config, api) {
     multiplier: this.config.temperature.multiplier || 1000
   };
   
+  this.config.notifier = {
+    active: this.config.notifier.active || false,
+    token: this.config.notifier.token, 
+    chatID: this.config.notifier.chatID
+  };
+  
+  if(!this.config.notifier.token || !this.config.notifier.chatID || !this.config.notifier.active)
+    this.config.notifier = false;
+  
   if (api) {
   
     if (api.version < 2.2) {
@@ -112,6 +121,7 @@ InstancesPlatform.prototype = {
     accessory.context.startParam = this.config.startParam;
     accessory.context.sudo = this.config.sudo;
     accessory.context.temperature = this.config.temperature;
+    accessory.context.notifier = this.config.notifier;
 
     if(add){
     
