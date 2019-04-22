@@ -13,6 +13,11 @@
       "sudo": false,
       "temperature": {
         "active": true
+      },
+      "notifier":{
+        "active": true,
+        "token": "TELEGRAMTOKEN",
+        "chatID": "TELEGRAMCHATID"
       }
     }
   ]
