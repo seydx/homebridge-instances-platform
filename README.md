@@ -62,7 +62,9 @@ After [Homebridge](https://github.com/nfarina/homebridge) has been installed:
       "notifier":{
         "active": true,
         "token": "TELEGRAMTOKEN",
-        "chatID": "TELEGRAMCHATID"
+        "chatID": "TELEGRAMCHATID",
+        "filter": ['Main process exited', 'Error', 'error', 'ERROR'],
+        "spamInterval": 1
       }
     }
   ]
@@ -86,6 +88,8 @@ After [Homebridge](https://github.com/nfarina/homebridge) has been installed:
 | notifier.active | **No** | Telegram notification _(Default: false)_  |
 | notifier.token | **No** | Telegram Bot Token |
 | notifier.chatID | **No** | Telegram Chat ID |
+| notifier.filter | **No** | An array/string of matches to filter by _(Default: ['Main process exited'])_ |
+| notifier.spamInterval | **No** | Timer in minutes to block telegram spam _(Default: 1 min)_ |
 
 
 ## Supported clients
