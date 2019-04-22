@@ -46,7 +46,9 @@ function InstancesPlatform (log, config, api) {
   this.config.notifier = {
     active: this.config.notifier.active || false,
     token: this.config.notifier.token, 
-    chatID: this.config.notifier.chatID
+    chatID: this.config.notifier.chatID,
+    filter: this.config.notifier.filter || ['Main process exited'],
+    spamInterval: this.config.notifier.spamInterval * 60 * 1000 || 1 * 60 * 1000
   };
   
   if(!this.config.notifier.token || !this.config.notifier.chatID || !this.config.notifier.active)
