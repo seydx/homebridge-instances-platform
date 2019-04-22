@@ -36,6 +36,7 @@ function InstancesPlatform (log, config, api) {
   this.config.sudo = this.config.sudo || false;
   this.config.clearCache = this.config.clearCache || false;
   this.config.temperature = this.config.temperature || {};
+  this.config.notifier = this.config.notifier || {};
   
   this.config.temperature = {
     active: this.config.temperature.active || false,
