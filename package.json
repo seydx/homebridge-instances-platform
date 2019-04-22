@@ -18,13 +18,12 @@
   },
   "homepage": "https://github.com/SeydX/homebridge-instances-platform#readme",
   "keywords": [
-    "bravia",
-    "player",
+    "instance",
+    "dynamic",
     "homebridge",
     "homebridge-plugin",
     "plugin",
-    "tv",
-    "android"
+    "service"
   ],
   "engines": {
     "node": "^8.9.1",
