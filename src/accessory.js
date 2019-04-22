@@ -53,6 +53,8 @@ class BridgeAccessory {
       this.accessory.context.path = await this.getNpmPath();
       let services = await this.handleServices();
       
+      this.subtypes = services.map( serv => { return serv.subname; });
+
       for(const service of services){
  
         if(service){
@@ -97,6 +99,8 @@ class BridgeAccessory {
       this.accessory.services.map( service => { if(service.subtype) this._services.set(service.displayName, service); });
       
       await this.handleDisabledServices();
+      
+      if(!add) this.getServiceState();
 
     } catch(err){
 
@@ -228,9 +232,6 @@ class BridgeAccessory {
           maxValue: 100,
           minStep: 0.01
         });
-      
-      if(this.accessory.context.notifier) 
-        this.getServiceState(service);
     
     } else {
       
@@ -315,6 +316,7 @@ class BridgeAccessory {
   
     let overallCpu = 0;
     let overallRam = 0;
+    let handledPlugins = [];
 
     try {
     
@@ -336,7 +338,9 @@ class BridgeAccessory {
         
           for(const parsedService of parsedServices){
         
-            if(parsedService.service === service.subtype){
+            if(parsedService.service === service.subtype && !handledPlugins.includes(parsedService.service)){
+            
+              handledPlugins.push(parsedService.service);
 
               state = true;
               cpu = parseFloat(parsedService.cpu);
@@ -655,11 +659,11 @@ class BridgeAccessory {
 
   }
   
-  async getServiceState(service){
-
+  async getServiceState(){
+  
     let opts = {
       identifier: ['systemd', 'homebridge'],
-      unit: service.subtype,
+      unit: this.subtypes,
       filter: ['Main process exited']
     };
     
@@ -669,7 +673,7 @@ class BridgeAccessory {
 
       let plugin = event.MESSAGE.split(':')[0];
   
-      let message = this.accessory.displayName + ': ' + plugin + ' crashed!';
+      let message = this.accessory.displayName + ': ' + plugin + ' stopped!';
       this.logger.warn(message);
   
       try {
@@ -684,6 +688,12 @@ class BridgeAccessory {
   
       }
 
+    });
+    
+    process.on('SIGTERM', () => {
+    
+      journalctl.stop();
+    
     });
   
   }
