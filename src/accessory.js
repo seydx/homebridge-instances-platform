@@ -1,10 +1,12 @@
 'use strict';
 
+const fs = require('fs');
+const https = require('https');
 const { exec } = require('child_process');
 const { lstatSync, readdirSync } = require('fs');
 
-const fs = require('fs');
 const latestVersion = require('latest-version');
+const Journalctl = require('@seydx/journalctl');
 
 const LogUtil = require('../lib/LogUtil.js');
 const HomeKitTypes = require('./HomeKit.js');
@@ -226,6 +228,9 @@ class BridgeAccessory {
           maxValue: 100,
           minStep: 0.01
         });
+      
+      if(this.accessory.context.notifier) 
+        this.getServiceState(service);
     
     } else {
       
@@ -650,6 +655,39 @@ class BridgeAccessory {
 
   }
   
+  async getServiceState(service){
+
+    let opts = {
+      identifier: ['systemd', 'homebridge'],
+      unit: service.subtype,
+      filter: ['Main process exited']
+    };
+    
+    let journalctl = new Journalctl(opts);
+    
+    journalctl.on('event', async event => {
+
+      let plugin = event.MESSAGE.split(':')[0];
+  
+      let message = this.accessory.displayName + ': ' + plugin + ' crashed!';
+      this.logger.warn(message);
+  
+      try {
+  
+        await this.sendTelegram(this.accessory.context.notifier.token, this.accessory.context.notifier.chatID, message);
+        this.logger.info(this.accessory.displayName + ': Successfully send Telegram notification');
+  
+      } catch(err) {
+  
+        this.logger.error(this.accessory.displayName + ': An error occured while sending telegram notification!');
+        this.logger.error(err);
+  
+      }
+
+    });
+  
+  }
+  
   async setServiceState(service, state, callback){
   
     try {
@@ -807,6 +845,46 @@ class BridgeAccessory {
       });
     });
   
+  }
+  
+  sendTelegram(token,chatID,text){
+    
+    return new Promise((resolve,reject)=>{
+      
+      const post_data = JSON.stringify({
+        chat_id: chatID,
+        text: text
+      });
+      
+      const postheaders = {
+        'Content-Type' : 'application/json'
+      };
+      
+      const options = {
+        host:'api.telegram.org',
+        path:'/bot' + token + '/sendMessage',
+        method:'POST',
+        headers : postheaders
+      };
+      
+      const req = https.request(options,function (res){
+      
+        if(res.statusCode<200||res.statusCode>299){
+          reject(new Error('Failed to load data, status code:'+res.statusCode));
+        }
+        
+        const body=[];
+        res.on('data',(chunk)=>body.push(chunk));
+        res.on('end',()=>resolve(body.join('')));
+        
+      });
+      
+      req.on('error',(err)=>reject(err));
+      req.write(post_data);
+      req.end();
+      
+    });
+    
   }
   
 }
