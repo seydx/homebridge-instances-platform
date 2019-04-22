@@ -14,7 +14,7 @@
 
 <img src="https://raw.githubusercontent.com/SeydX/homebridge-instances-platform/master/images/69E0F798-BCB6-4F15-B279-7C44AE311FC6.gif" align="right" alt="HomeKit Overview" width="270px" height="541px">
 
-This is a dynamic platform plugin for [Homebridge](https://github.com/nfarina/homebridge) to control your **homebridge instance(s)**. It is capable to dynamically add or remove services, depending on if service is enabled or disabled!
+This is a dynamic platform plugin for [Homebridge](https://github.com/nfarina/homebridge) to control your **homebridge instance(s)**. It is capable to dynamically add or remove services, depending on if service is enabled or disabled! It is also possible to add a listener to your journalctl. The listener will listen on errors and will send a notification (via telegram) is a service crashes.
 
 This plugin supports following functions:
 
@@ -58,6 +58,11 @@ After [Homebridge](https://github.com/nfarina/homebridge) has been installed:
       "sudo": false,
       "temperature": {
         "active": true
+      },
+      "notifier":{
+        "active": true,
+        "token": "TELEGRAMTOKEN",
+        "chatID": "TELEGRAMCHATID"
       }
     }
   ]
@@ -78,6 +83,9 @@ After [Homebridge](https://github.com/nfarina/homebridge) has been installed:
 | temperature.active | **No** | Temperature Characteristic for CPU Temperature _(Default: false)_  |
 | temperature.file | **No** | Custom file path to CPU Temperature (eg for Orange PI) |
 | temperature.multiplier | **No** | Custom multiplier (eg for Orange PI) |
+| notifier.active | **No** | Telegram notification _(Default: false)_  |
+| notifier.token | **No** | Telegram Bot Token |
+| notifier.chatID | **No** | Telegram Chat ID |
 
 
 ## Supported clients
