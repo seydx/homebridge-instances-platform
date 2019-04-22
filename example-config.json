@@ -17,7 +17,9 @@
       "notifier":{
         "active": true,
         "token": "TELEGRAMTOKEN",
-        "chatID": "TELEGRAMCHATID"
+        "chatID": "TELEGRAMCHATID",
+        "filter": ["Main process exited", "Error", "error", "ERROR"],
+        "spamInterval": 1
       }
     }
   ]
