@@ -705,8 +705,11 @@ class BridgeAccessory {
     
     journalctl.on('event', async event => {
 
-      let plugin = event.MESSAGE.split(':')[0];
-  
+      let plugin = 'Homebridge';
+
+      if(event.MESSAGE.includes('Main process exited') || event.MESSAGE.includes('Unit entered failed state') || event.MESSAGE.includes('Failed with result \'exit-code\''))
+        plugin = event.MESSAGE.split(':')[0];
+
       let message = this.accessory.displayName + ': ' + plugin + ' stopped!';
       this.logger.warn(message);
   
