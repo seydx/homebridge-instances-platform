@@ -46,6 +46,8 @@ class BridgeAccessory {
   
   async handleAccessory(add){
   
+    const self = this;
+    
     try {
       
       this._activeServices = new Map();
@@ -100,8 +102,38 @@ class BridgeAccessory {
       
       await this.handleDisabledServices();
       
-      if(!add) this.getServiceState();
+      if(!add){
+      
+        if(this.accessory.context.notifier){
+    
+          this.store = require('json-fs-store')(this.platform.api.user.storagePath());
+    
+          this.store.load('warned', (err,object) => {
+    
+            if(err && !object){
+    
+              this.store.add({id: 'warned', warned: false}, err => { if(err) this.logger.error(err); });    
+              this.accessory.context.warned = false;
+  
+            }
+  
+            this.accessory.context.warned = true;
+    
+          });
+    
+          setTimeout(function(){
 
+            self.store.add({id: 'warned', warned: false}, err => { if(err) self.logger.error(err); });    
+            self.accessory.context.warned = false;    
+    
+          }, self.accessory.context.notifier.spamInterval); //spam blocker
+    
+        }
+      
+        this.getServiceState();
+      
+      }
+      
     } catch(err){
 
       this.logger.error(this.accessory.displayName + ': An error occured while fetching services!');
@@ -303,8 +335,7 @@ class BridgeAccessory {
             callback(null, temp);
             
           });
-      }  
-      
+      }
       
       this.getAllInformation();
       
@@ -660,14 +691,17 @@ class BridgeAccessory {
   }
   
   async getServiceState(){
+
+    const self = this;
   
     let opts = {
       identifier: ['systemd', 'homebridge'],
       unit: this.subtypes,
-      filter: ['Main process exited']
+      filter: this.accessory.context.notifier.filter
     };
     
     let journalctl = new Journalctl(opts);
+    let warned = false;
     
     journalctl.on('event', async event => {
 
@@ -678,9 +712,17 @@ class BridgeAccessory {
   
       try {
   
-        await this.sendTelegram(this.accessory.context.notifier.token, this.accessory.context.notifier.chatID, message);
-        this.logger.info(this.accessory.displayName + ': Successfully send Telegram notification');
-  
+        if(!warned){
+        
+          await this.sendTelegram(this.accessory.context.notifier.token, this.accessory.context.notifier.chatID, message);
+          this.logger.info(this.accessory.displayName + ': Successfully send Telegram notification');
+        
+          warned = true;
+          
+          setTimeout(function(){ warned = false; }, self.accessory.context.notifier.spamInterval); //spam blocker
+        
+        }
+        
       } catch(err) {
   
         this.logger.error(this.accessory.displayName + ': An error occured while sending telegram notification!');
@@ -689,10 +731,34 @@ class BridgeAccessory {
       }
 
     });
-    
-    process.on('SIGTERM', () => {
+
+    process.on('SIGTERM', async () => {
     
       journalctl.stop();
+      
+      //in case if we're using only one service, or this service crashes
+      //blocking spam with accessory.context....
+      
+      let message = this.accessory.displayName + ': Homebridge stopped!';
+      
+      try {
+  
+        if(!this.accessory.context.warned){
+        
+          await this.sendTelegram(this.accessory.context.notifier.token, this.accessory.context.notifier.chatID, message);
+          this.logger.info(this.accessory.displayName + ': Successfully send Telegram notification');
+    
+          this.store.add({id: 'warned', warned: true}, err => { if(err) this.logger.error(err); });      
+          this.accessory.context.warned = true;
+        
+        }
+  
+      } catch(err) {
+  
+        this.logger.error(this.accessory.displayName + ': An error occured while sending telegram notification!');
+        this.logger.error(err);
+  
+      }
     
     });
   
