@@ -63,7 +63,7 @@ After [Homebridge](https://github.com/nfarina/homebridge) has been installed:
         "active": true,
         "token": "TELEGRAMTOKEN",
         "chatID": "TELEGRAMCHATID",
-        "filter": ['Main process exited', 'Error', 'error', 'ERROR'],
+        "filter": ["Main process exited", "Error", "error", "ERROR"],
         "spamInterval": 1
       }
     }
