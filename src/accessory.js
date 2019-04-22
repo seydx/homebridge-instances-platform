@@ -102,33 +102,29 @@ class BridgeAccessory {
       
       await this.handleDisabledServices();
       
-      if(!add){
-      
-        if(this.accessory.context.notifier){
-    
-          this.store = require('json-fs-store')(this.platform.api.user.storagePath());
-    
-          this.store.load('warned', (err,object) => {
-    
-            if(err && !object){
-    
-              this.store.add({id: 'warned', warned: false}, err => { if(err) this.logger.error(err); });    
-              this.accessory.context.warned = false;
-  
-            }
-  
-            this.accessory.context.warned = true;
-    
-          });
-    
-          setTimeout(function(){
+      if(!add && this.accessory.context.notifier && this.accessory.context.notifier.active){
 
-            self.store.add({id: 'warned', warned: false}, err => { if(err) self.logger.error(err); });    
-            self.accessory.context.warned = false;    
+        this.store = require('json-fs-store')(this.platform.api.user.storagePath());
     
-          }, self.accessory.context.notifier.spamInterval); //spam blocker
+        this.store.load('warned', (err,object) => {
     
-        }
+          if(err && !object){
+    
+            this.store.add({id: 'warned', warned: false}, err => { if(err) this.logger.error(err); });    
+            this.accessory.context.warned = false;
+  
+          }
+  
+          this.accessory.context.warned = true;
+    
+        });
+    
+        setTimeout(function(){
+
+          self.store.add({id: 'warned', warned: false}, err => { if(err) self.logger.error(err); });    
+          self.accessory.context.warned = false;    
+    
+        }, self.accessory.context.notifier.spamInterval); //spam blocker
       
         this.getServiceState();
       
