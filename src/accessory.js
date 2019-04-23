@@ -1,7 +1,9 @@
 'use strict';
 
 const fs = require('fs');
+const http = require('http');
 const https = require('https');
+const bonjour = require('bonjour-hap');
 const { exec } = require('child_process');
 const { lstatSync, readdirSync } = require('fs');
 
@@ -103,6 +105,8 @@ class BridgeAccessory {
       await this.handleDisabledServices();
       
       if(!add && this.accessory.context.notifier && this.accessory.context.notifier.active){
+      
+        //Instance Monitor
 
         this.store = require('json-fs-store')(this.platform.api.user.storagePath());
     
@@ -273,6 +277,9 @@ class BridgeAccessory {
       this.mainService.getCharacteristic(Characteristic.DiskSpace)
         .on('get', this.getDiskSpace.bind(this));
         
+      if(!this.mainService.testCharacteristic(Characteristic.PublishedAccessories))
+        this.mainService.addCharacteristic(Characteristic.PublishedAccessories);
+        
       if(!this.mainService.testCharacteristic(Characteristic.Updatable))
         this.mainService.addCharacteristic(Characteristic.Updatable);
         
@@ -334,6 +341,7 @@ class BridgeAccessory {
       }
       
       this.getAllInformation();
+      this.getAccessories();
       
     }
 
@@ -350,6 +358,44 @@ class BridgeAccessory {
       await timeout(2000);
 
       let parsedServices = await this.handleInformations();
+      
+      for(const i of parsedServices){
+      
+        if(handledPlugins.length){
+      
+          let skip = false;
+      
+          for(const l of handledPlugins){
+      
+            if(i.service === l.service){
+      
+              skip = true;
+      
+              if(parseFloat(l.cpu) > parseFloat(i.cpu)||parseFloat(l.memory) > parseFloat(i.memory)){
+      
+                i.pid = l.pid;
+                i.cpu = l.cpu;
+                i.memory = l.memory;
+                i.time = l.time;
+                i.service = l.service;
+                i.state = l.state;
+      
+              }
+      
+            }
+      
+          }
+      
+          if(!skip)
+            handledPlugins.push(i);
+      
+        } else {
+      
+          handledPlugins.push(i);
+      
+        }
+      
+      }
     
       for(const service of this.accessory.services){
     
@@ -363,11 +409,9 @@ class BridgeAccessory {
           overallCpu += parseFloat(service.getCharacteristic(Characteristic.CPUUsage).value);
           overallRam += parseFloat(service.getCharacteristic(Characteristic.RAMUsage).value);
         
-          for(const parsedService of parsedServices){
+          for(const parsedService of handledPlugins){
         
-            if(parsedService.service === service.subtype && !handledPlugins.includes(parsedService.service)){
-            
-              handledPlugins.push(parsedService.service);
+            if(parsedService.service === service.subtype){
 
               state = true;
               cpu = parseFloat(parsedService.cpu);
@@ -422,7 +466,7 @@ class BridgeAccessory {
   async getPluginState(callback){
   
     this.updatable = [];
-    let pluginUpdates = '';
+    let pluginUpdates;
   
     try {
     
@@ -434,7 +478,6 @@ class BridgeAccessory {
           rawdata = JSON.parse(rawdata);
         
           let version = rawdata.version;
-        
           let newVersion = await this.checkNpmPlugin(name);
         
           if(newVersion && this.checkVersions(version, newVersion)) {
@@ -524,6 +567,77 @@ class BridgeAccessory {
         resolve(stdout);
       });
     });
+  
+  }
+  
+  getAccessories(){
+  
+    this.realAccessories = [];
+  
+    const Bonjour = new bonjour();
+    const browser = Bonjour.find({ type: 'hap' });
+    
+    browser.on('up', service => {
+    
+      if(service.name.includes('Homebridge') && service.txt && service.txt.sf === '0'){
+  
+        let opts = {
+          name: service.name,
+          ip: service.referer.address,
+          port: service.port
+        };
+
+        this.readAccessories(opts);
+  
+      }
+    
+    });
+    
+    process.on('SIGTERM', () => {
+    
+      this.logger.warn(this.accessory.displayName + ': Got SIGTERM. Destroying Bonjour!');
+    
+      if(Bonjour)
+        Bonjour.destroy();
+    
+    });
+  
+  }
+  
+  async readAccessories(opts){
+  
+    try {
+
+      let accessories = await this.loadAccessories(opts);
+
+      if(accessories !== 'Unauthorized'){
+
+        accessories = JSON.parse(accessories);
+
+        for(const accessory of accessories.accessories){
+
+          let skip = false;
+
+          for(const services of accessory.services)
+            if(services.type === '49FB9D4D-0FEA-4BF1-8FA6-E7B18AB86DCE')
+              skip = true;
+
+          if(!skip) 
+            this.realAccessories.push(accessory);
+  
+          this.mainService.getCharacteristic(Characteristic.PublishedAccessories)
+            .updateValue(this.realAccessories.length);
+
+        }
+  
+      }
+
+    } catch(err) {
+
+      this.logger.error(this.accessory.displayName + ': An error occured while reading accessories!');
+      this.logger.error(err);
+
+    }
   
   }
   
@@ -703,7 +817,7 @@ class BridgeAccessory {
 
       let plugin = 'Homebridge';
 
-      if(event.MESSAGE.includes('Main process exited') || event.MESSAGE.includes('Unit entered failed state') || event.MESSAGE.includes('Failed with result \'exit-code\''))
+      if(event.MESSAGE.includes('Main process exited')||event.MESSAGE.includes('Unit entered failed state')||event.MESSAGE.includes('Failed with result \'exit-code\''))
         plugin = event.MESSAGE.split(':')[0];
 
       let message = this.accessory.displayName + ': ' + plugin + ' stopped!';
@@ -736,7 +850,7 @@ class BridgeAccessory {
       journalctl.stop();
       
       //in case if we're using only one service, or this service crashes
-      //blocking spam with accessory.context....
+      //spam blocker with cached value
       
       let message = this.accessory.displayName + ': Homebridge stopped!';
       
@@ -960,6 +1074,43 @@ class BridgeAccessory {
       
     });
     
+  }
+  
+  loadAccessories(opts){
+
+    return new Promise((resolve,reject)=>{
+
+      const postheaders = {
+        'Content-Type' : 'application/json',
+        'authorization': '031-45-154'
+      };
+      
+      const options = {
+        host:opts.ip,
+        port: opts.port,
+        path:'/accessories',
+        method:'PUT',
+        headers : postheaders
+      };
+      
+      const req = http.request(options,function (res){
+      
+        if(res.statusCode<200||res.statusCode>299){
+          if(res.statusCode === 401) resolve('Unauthorized');
+          reject(new Error('Failed to load data, status code:'+res.statusCode));
+        }
+        
+        const body=[];
+        res.on('data',(chunk)=>body.push(chunk));
+        res.on('end',()=>resolve(body.join('')));
+        
+      });
+      
+      req.on('error',(err)=>reject(err));
+      req.end();
+      
+    });
+
   }
   
 }
