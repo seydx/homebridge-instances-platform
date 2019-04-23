@@ -1,6 +1,6 @@
 {
   "name": "homebridge-instances-platform",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "description": "homebridge-instances-platform",
   "main": "index.js",
   "devDependencies": {},
@@ -32,6 +32,7 @@
   "dependencies": {
     "latest-version": "^5.1.0",
     "@seydx/journalctl": "^1.0.0",
-    "json-fs-store": "^1.0.1"
+    "json-fs-store": "^1.0.1",
+    "bonjour-hap": "^3.5.1"
   }
 }
