@@ -22,6 +22,20 @@ module.exports = {
     Characteristic.ServiceStatus.UUID = '0258a1bf-6b32-470d-aa92-ba340eee4441';   
     
     /// /////////////////////////////////////////////////////////////////////////
+    // PublishedAccessories Characteristic
+    /// ///////////////////////////////////////////////////////////////////////// 
+    Characteristic.PublishedAccessories = function() {
+      Characteristic.call(this, 'Accessories', '8a569270-5494-427f-8668-22203124bb0f');
+      this.setProps({
+        format: Characteristic.Formats.INT,
+        perms: [Characteristic.Perms.READ, Characteristic.Perms.NOTIFY]
+      });
+      this.value = this.getDefaultValue();
+    };
+    inherits(Characteristic.PublishedAccessories, Characteristic);
+    Characteristic.PublishedAccessories.UUID = '8a569270-5494-427f-8668-22203124bb0f';   
+    
+    /// /////////////////////////////////////////////////////////////////////////
     // Updatable Characteristic
     /// ///////////////////////////////////////////////////////////////////////// 
     Characteristic.Updatable = function() {
@@ -150,6 +164,7 @@ module.exports = {
       this.addOptionalCharacteristic(Characteristic.DiskSpace);
       this.addOptionalCharacteristic(Characteristic.Updatable);
       this.addOptionalCharacteristic(Characteristic.UpdatePlugins);
+      this.addOptionalCharacteristic(Characteristic.PublishedAccessories);
       this.addOptionalCharacteristic(Characteristic.CurrentTemperature);
     
     };
