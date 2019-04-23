@@ -1,6 +1,11 @@
 # Changelog
 
 
+## v1.4.3 - 2019-04-23
+- [NEW] Amount of published accessories (only for homebridge instances in insecure mode (-I) and pin 031-45-154)
+- Bugfixes
+
+
 ## 1.4.1 - 2019-04-22
 - [NEW] Added spamInterval to notifier
 - [NEW] Added Filter to notifier
