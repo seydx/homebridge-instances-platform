@@ -24,7 +24,8 @@ This plugin supports following functions:
 - **CPU Usage:** Shows summarized CPU usage of all detected services
 - **RAM Usage:** Shows summarized CPU usage of all detected services
 - **Disk Space:** Shows available disk space
-- **Updatable Plugins:** Shows size of updatable plugins and extra switch to update all plugins
+- **Updatable Plugins:** Shows amount of updatable plugins and extra switch to update all plugins
+- **Accessories:** Shows amount of published accessories (only for homebridge instances in insecure mode (-I) and Pin 031-45-154
 
 **Services:**
 - **Service Power Switch:** Start/Stop Homebridge Instance
