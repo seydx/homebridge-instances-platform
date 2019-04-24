@@ -1,6 +1,6 @@
 {
   "name": "homebridge-instances-platform",
-  "version": "1.4.4",
+  "version": "1.4.5",
   "description": "homebridge-instances-platform",
   "main": "index.js",
   "devDependencies": {},
