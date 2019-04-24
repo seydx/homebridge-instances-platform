@@ -595,7 +595,7 @@ class BridgeAccessory {
     
     process.on('SIGTERM', () => {
     
-      this.logger.warn(this.accessory.displayName + ': Got SIGTERM. Destroying Bonjour!');
+      this.logger.warn(this.accessory.displayName + ': Got SIGTERM. Closing Bonjour!');
     
       if(Bonjour)
         Bonjour.destroy();
@@ -814,14 +814,8 @@ class BridgeAccessory {
     let warned = false;
     
     journalctl.on('event', async event => {
-
-      let plugin = 'Homebridge';
-
-      if(event.MESSAGE.includes('Main process exited')||event.MESSAGE.includes('Unit entered failed state')||event.MESSAGE.includes('Failed with result \'exit-code\''))
-        plugin = event.MESSAGE.split(':')[0];
-
-      let message = this.accessory.displayName + ': ' + plugin + ' stopped!';
-      this.logger.warn(message);
+      
+      let message = '*Attention:* ' + event.MESSAGE;
   
       try {
   
@@ -852,7 +846,7 @@ class BridgeAccessory {
       //in case if we're using only one service, or this service crashes
       //spam blocker with cached value
       
-      let message = this.accessory.displayName + ': Homebridge stopped!';
+      let message = '*Attention:* Homebridge stopped!';
       
       try {
   
@@ -1042,7 +1036,8 @@ class BridgeAccessory {
       
       const post_data = JSON.stringify({
         chat_id: chatID,
-        text: text
+        text: text,
+        parse_mode: 'Markdown'
       });
       
       const postheaders = {
