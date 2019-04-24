@@ -1,6 +1,11 @@
 # Changelog
 
 
+## 1.4.5 - 2019-04-24
+- [NEW] Filter instances for notifier
+- Bugfixes
+
+
 ## v1.4.3 - 2019-04-23
 - [NEW] Amount of published accessories (only for homebridge instances in insecure mode (-I) and pin 031-45-154)
 - Bugfixes
