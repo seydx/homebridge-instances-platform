@@ -19,6 +19,7 @@
         "token": "TELEGRAMTOKEN",
         "chatID": "TELEGRAMCHATID",
         "filter": ["Main process exited", "Error", "error", "ERROR"],
+        "filterInstances": ["homebridge-alexa"],
         "spamInterval": 1
       }
     }
