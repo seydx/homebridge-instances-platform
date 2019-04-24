@@ -803,10 +803,16 @@ class BridgeAccessory {
   async getServiceState(){
 
     const self = this;
+    
+    let instances = [];
+    
+    for(const instance of this.subtypes)
+      if(!this.accessory.context.notifier.filterInstances.includes(instance))
+        instances.push(instance)
   
     let opts = {
       identifier: ['systemd', 'homebridge'],
-      unit: this.subtypes,
+      unit: instances,
       filter: this.accessory.context.notifier.filter
     };
     
