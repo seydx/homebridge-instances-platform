@@ -49,7 +49,7 @@ function InstancesPlatform (log, config, api) {
     token: this.config.notifier.token, 
     chatID: this.config.notifier.chatID,
     filter: this.config.notifier.filter || ['Main process exited'],
-    filterInstances: this.config.notifier.filterInstances || [];
+    filterInstances: this.config.notifier.filterInstances || [],
     spamInterval: this.config.notifier.spamInterval * 60 * 1000 || 1 * 60 * 1000
   };
   
