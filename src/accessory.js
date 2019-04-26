@@ -1,9 +1,7 @@
 'use strict';
 
 const fs = require('fs');
-const http = require('http');
 const https = require('https');
-const bonjour = require('bonjour-hap');
 const { exec } = require('child_process');
 const { lstatSync, readdirSync } = require('fs');
 
@@ -54,7 +52,9 @@ class BridgeAccessory {
       
       this._activeServices = new Map();
       
-      this.accessory.context.path = await this.getNpmPath();
+      if(!add)
+        this.accessory.context.path = await this.getNpmPath();
+      
       let services = await this.handleServices();
       
       this.subtypes = services.map( serv => { return serv.subname; });
@@ -131,6 +131,7 @@ class BridgeAccessory {
         }, self.accessory.context.notifier.spamInterval); //spam blocker
       
         this.getServiceState();
+        this.getPluginState(null, true);
       
       }
       
@@ -186,12 +187,13 @@ class BridgeAccessory {
           service = service.map((word)=>{
             const firstletter = word.charAt(0).toUpperCase();
             word = firstletter.concat(word.slice(1,word.length));
-
             return word;
           });
 
           service = service.join(' ');
-          service = service.slice(this.accessory.context.startParam.length);
+          
+          if(service.length > this.accessory.context.startParam.length)
+            service = service.slice(this.accessory.context.startParam.length);
     
           let Services = {
             name: service,
@@ -271,14 +273,14 @@ class BridgeAccessory {
         .on('set', this.setMainSwitchState.bind(this))
         .updateValue(false);
         
+      if(this.mainService.testCharacteristic(Characteristic.PublishedAccessories))
+        this.mainService.removeCharacteristic(this.mainService.getCharacteristic(Characteristic.PublishedAccessories));
+        
       if(!this.mainService.testCharacteristic(Characteristic.DiskSpace))
         this.mainService.addCharacteristic(Characteristic.DiskSpace);
         
       this.mainService.getCharacteristic(Characteristic.DiskSpace)
         .on('get', this.getDiskSpace.bind(this));
-        
-      if(!this.mainService.testCharacteristic(Characteristic.PublishedAccessories))
-        this.mainService.addCharacteristic(Characteristic.PublishedAccessories);
         
       if(!this.mainService.testCharacteristic(Characteristic.Updatable))
         this.mainService.addCharacteristic(Characteristic.Updatable);
@@ -341,7 +343,6 @@ class BridgeAccessory {
       }
       
       this.getAllInformation();
-      this.getAccessories();
       
     }
 
@@ -463,7 +464,7 @@ class BridgeAccessory {
   
   }
   
-  async getPluginState(callback){
+  async getPluginState(callback, polling){
   
     this.updatable = [];
     let pluginUpdates;
@@ -500,7 +501,23 @@ class BridgeAccessory {
     
       pluginUpdates = this.updatable.length ? this.updatable.length.toString() : 'Up to date';
     
-      callback(null, pluginUpdates);
+      if(polling === true){
+      
+        this.mainService.getCharacteristic(Characteristic.Updatable)
+          .updateValue(pluginUpdates);
+          
+        let message = '*Update Monitor:* ' + ( this.updatable.length ? 'New updates found for ' + this.updatable.toString() : 'Plugins up to date!' );
+          
+        await this.sendTelegram(this.accessory.context.notifier.token, this.accessory.context.notifier.chatID, message);
+        this.logger.info(this.accessory.displayName + ': Successfully send Telegram notification');
+        
+        setTimeout(this.getPluginState.bind(this, null, true), this.accessory.context.notifier.updatesPolling);
+      
+      } else {
+      
+        callback(null, pluginUpdates);
+      
+      }
     
     }
 
@@ -567,77 +584,6 @@ class BridgeAccessory {
         resolve(stdout);
       });
     });
-  
-  }
-  
-  getAccessories(){
-  
-    this.realAccessories = [];
-  
-    const Bonjour = new bonjour();
-    const browser = Bonjour.find({ type: 'hap' });
-    
-    browser.on('up', service => {
-    
-      if(service.name.includes('Homebridge') && service.txt && service.txt.sf === '0'){
-  
-        let opts = {
-          name: service.name,
-          ip: service.referer.address,
-          port: service.port
-        };
-
-        this.readAccessories(opts);
-  
-      }
-    
-    });
-    
-    process.on('SIGTERM', () => {
-    
-      this.logger.warn(this.accessory.displayName + ': Got SIGTERM. Closing Bonjour!');
-    
-      if(Bonjour)
-        Bonjour.destroy();
-    
-    });
-  
-  }
-  
-  async readAccessories(opts){
-  
-    try {
-
-      let accessories = await this.loadAccessories(opts);
-
-      if(accessories !== 'Unauthorized'){
-
-        accessories = JSON.parse(accessories);
-
-        for(const accessory of accessories.accessories){
-
-          let skip = false;
-
-          for(const services of accessory.services)
-            if(services.type === '49FB9D4D-0FEA-4BF1-8FA6-E7B18AB86DCE')
-              skip = true;
-
-          if(!skip) 
-            this.realAccessories.push(accessory);
-  
-          this.mainService.getCharacteristic(Characteristic.PublishedAccessories)
-            .updateValue(this.realAccessories.length);
-
-        }
-  
-      }
-
-    } catch(err) {
-
-      this.logger.error(this.accessory.displayName + ': An error occured while reading accessories!');
-      this.logger.error(err);
-
-    }
   
   }
   
@@ -808,7 +754,7 @@ class BridgeAccessory {
     
     for(const instance of this.subtypes)
       if(!this.accessory.context.notifier.filterInstances.includes(instance))
-        instances.push(instance)
+        instances.push(instance);
   
     let opts = {
       identifier: ['systemd', 'homebridge'],
@@ -1075,43 +1021,6 @@ class BridgeAccessory {
       
     });
     
-  }
-  
-  loadAccessories(opts){
-
-    return new Promise((resolve,reject)=>{
-
-      const postheaders = {
-        'Content-Type' : 'application/json',
-        'authorization': '031-45-154'
-      };
-      
-      const options = {
-        host:opts.ip,
-        port: opts.port,
-        path:'/accessories',
-        method:'PUT',
-        headers : postheaders
-      };
-      
-      const req = http.request(options,function (res){
-      
-        if(res.statusCode<200||res.statusCode>299){
-          if(res.statusCode === 401) resolve('Unauthorized');
-          reject(new Error('Failed to load data, status code:'+res.statusCode));
-        }
-        
-        const body=[];
-        res.on('data',(chunk)=>body.push(chunk));
-        res.on('end',()=>resolve(body.join('')));
-        
-      });
-      
-      req.on('error',(err)=>reject(err));
-      req.end();
-      
-    });
-
   }
   
 }
