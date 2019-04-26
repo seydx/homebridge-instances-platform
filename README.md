@@ -54,7 +54,7 @@ After [Homebridge](https://github.com/nfarina/homebridge) has been installed:
   "platforms": [
     {
       "platform": "InstancesPlatform",
-      "startParam": "home",
+      "startParam": "homebridge",
       "clearCache": false,
       "sudo": false,
       "temperature": {
