@@ -1,6 +1,10 @@
 # Changelog
 
 
+## 1.4.7 - 2019-04-25
+-  [NEW] Exclude services 
+
+
 ## 1.4.6 - 2019-04-26
 - [REMOVED] Accessories amount display
 - [NEW] Check plugin updates with telegram support
