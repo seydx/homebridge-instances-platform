@@ -31,7 +31,7 @@ function InstancesPlatform (log, config, api) {
   this.config = config;
   
   this.config.polling = this.config.polling * 1000||5000;
-  this.config.startParam = this.config.startParam || 'home';
+  this.config.startParam = this.config.startParam || 'homebridge';
   this.config.showInactives = this.config.showInactives || false;
   this.config.sudo = this.config.sudo || false;
   this.config.clearCache = this.config.clearCache || false;
@@ -50,7 +50,8 @@ function InstancesPlatform (log, config, api) {
     chatID: this.config.notifier.chatID,
     filter: this.config.notifier.filter || ['Main process exited'],
     filterInstances: this.config.notifier.filterInstances || [],
-    spamInterval: this.config.notifier.spamInterval * 60 * 1000 || 1 * 60 * 1000
+    spamInterval: this.config.notifier.spamInterval * 60 * 1000 || 1 * 60 * 1000,
+    updatesPolling: this.config.notifier.updatesPolling * 60 * 60 * 1000 || 12 * 60 * 60 * 1000,
   };
   
   if(!this.config.notifier.token || !this.config.notifier.chatID || !this.config.notifier.active)
