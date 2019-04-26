@@ -68,7 +68,8 @@ After [Homebridge](https://github.com/nfarina/homebridge) has been installed:
         "filterInstances": ["homebridge-alexa"],
         "spamInterval": 1,
         "updatesPolling": 12
-      }
+      },
+      "exclude": ["homebridge-alexa"]
     }
   ]
 }
@@ -95,6 +96,7 @@ After [Homebridge](https://github.com/nfarina/homebridge) has been installed:
 | notifier.filterInstances | **No** | An array/string of matches to filter instances _(Default: false)_ |
 | notifier.spamInterval | **No** | Timer in minutes to block telegram spam _(Default: 1 min)_ |
 | notifier.updatesPolling | **No** | Polling interval in hours for check plugin updates _(Default: 12h)_ |
+| exclude | **No** | An array of services to exclude from discovery |
 
 
 ## Supported clients
