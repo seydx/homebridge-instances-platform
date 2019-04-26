@@ -67,7 +67,7 @@ After [Homebridge](https://github.com/nfarina/homebridge) has been installed:
         "filter": ["Main process exited", "Error", "error", "ERROR"],
         "filterInstances": ["homebridge-alexa"],
         "spamInterval": 1,
-        "updatesPolling": 12,
+        "updatesPolling": 12
       }
     }
   ]
