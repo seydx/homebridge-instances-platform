@@ -179,28 +179,32 @@ class BridgeAccessory {
         lines = lines.map( service => {
       
           let originService = service.split('.service')[0];
-      
-          service = service.split('.service')[0];
-          service = service.replace(/-/g, ' ');        
-          service = service.split(' ');
-
-          service = service.map((word)=>{
-            const firstletter = word.charAt(0).toUpperCase();
-            word = firstletter.concat(word.slice(1,word.length));
-            return word;
-          });
-
-          service = service.join(' ');
           
-          if(service.length > this.accessory.context.startParam.length)
-            service = service.slice(this.accessory.context.startParam.length);
+          if(!this.accessory.context.exclude.includes(originService)){
+      
+            service = service.split('.service')[0];
+            service = service.replace(/-/g, ' ');        
+            service = service.split(' ');
+
+            service = service.map((word)=>{
+              const firstletter = word.charAt(0).toUpperCase();
+              word = firstletter.concat(word.slice(1,word.length));
+              return word;
+            });
+
+            service = service.join(' ');
+          
+            if(service.length > this.accessory.context.startParam.length)
+              service = service.slice(this.accessory.context.startParam.length);
     
-          let Services = {
-            name: service,
-            subname: originService
-          };
+            let Services = {
+              name: service,
+              subname: originService
+            };
         
-          if(service) return Services;
+            if(service) return Services;
+            
+          }
       
         });
       
