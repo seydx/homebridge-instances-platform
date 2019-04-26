@@ -194,7 +194,7 @@ class BridgeAccessory {
 
             service = service.join(' ');
           
-            if(service.length > this.accessory.context.startParam.length)
+            if(service.length > this.accessory.context.startParam.length && this.accessory.context.startParam.length >= 10)
               service = service.slice(this.accessory.context.startParam.length);
     
             let Services = {
