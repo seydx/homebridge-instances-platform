@@ -37,6 +37,7 @@ function InstancesPlatform (log, config, api) {
   this.config.clearCache = this.config.clearCache || false;
   this.config.temperature = this.config.temperature || {};
   this.config.notifier = this.config.notifier || {};
+  this.config.exclude = this.config.exclude || [];
   
   this.config.temperature = {
     active: this.config.temperature.active || false,
@@ -127,6 +128,7 @@ InstancesPlatform.prototype = {
     accessory.context.sudo = this.config.sudo;
     accessory.context.temperature = this.config.temperature;
     accessory.context.notifier = this.config.notifier;
+    accessory.context.exclude = this.config.exclude;
 
     if(add){
     
