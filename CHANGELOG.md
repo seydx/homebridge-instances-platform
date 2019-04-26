@@ -1,6 +1,12 @@
 # Changelog
 
 
+## 1.4.6 - 2019-04-26
+- [REMOVED] Accessories amount display
+- [NEW] Check plugin updates with telegram support
+- Bugfixes
+
+
 ## 1.4.5 - 2019-04-24
 - [NEW] Filter instances for notifier
 - Bugfixes
