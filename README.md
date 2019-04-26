@@ -82,7 +82,7 @@ After [Homebridge](https://github.com/nfarina/homebridge) has been installed:
 | **Attributes** | **Required** | **Usage** |
 |------------|----------|-------|
 | platform | **Yes** | Must be **InstancesPlatform** |
-| startParam | **No** | The word with which all .service files start _(Default: "home")_ |
+| startParam | **No** | The word with which all .service files start _(Default: "homebridge")_ |
 | clearCache | **No** | If true, the accessory will be removed from HomeKit _(Default: false)_ |
 | sudo | **No** | If you have problems starting/stopping an instance, set this true _(Default: false)_|
 | polling | **No** | Polling interval in seconds _(Default: 5s)_ |
