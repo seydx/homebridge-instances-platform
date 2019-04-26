@@ -6,6 +6,7 @@
 - [NEW] Check plugin updates with telegram support
 - Bugfixes
 
+**NOTE:** Due to some major bugfixes, you need to remove the Accessory from HomeKit! After update, set ```"clearCache": true``` in your config.json and restart homebridge. This will remove the accessory from HomeKit and your cache. After this, set ```"clearCache": false``` in config.json and restart homebridge again. This will add the Accessory (Switch) to HomeKit again
 
 ## 1.4.5 - 2019-04-24
 - [NEW] Filter instances for notifier
