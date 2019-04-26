@@ -118,3 +118,10 @@ You can contribute to this homebridge plugin in following ways:
 - Contribute changes to extend the capabilities
 
 Pull requests are accepted.
+
+
+## Troubleshooting
+
+### Upgrading from v1.4.5 to 1.4.6 or higher
+
+Due to some major bugfixes, you need to remove the Accessory from HomeKit! After update, set "clearCache": true in your config.json and restart homebridge. This will remove the accessory from HomeKit and your cache. After this, set "clearCache": false in config.json and restart homebridge again. This will add the Accessory (Switch) to HomeKit again
