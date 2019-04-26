@@ -25,7 +25,7 @@ This plugin supports following functions:
 - **RAM Usage:** Shows summarized CPU usage of all detected services
 - **Disk Space:** Shows available disk space
 - **Updatable Plugins:** Shows amount of updatable plugins and extra switch to update all plugins
-- **Accessories:** Shows amount of published accessories (only for homebridge instances in insecure mode (-I) and Pin 031-45-154
+- ~~**Accessories:** Shows amount of published accessories (only for homebridge instances in insecure mode (-I) and Pin 031-45-154~~ (removed)
 
 **Services:**
 - **Service Power Switch:** Start/Stop Homebridge Instance
@@ -66,7 +66,8 @@ After [Homebridge](https://github.com/nfarina/homebridge) has been installed:
         "chatID": "TELEGRAMCHATID",
         "filter": ["Main process exited", "Error", "error", "ERROR"],
         "filterInstances": ["homebridge-alexa"],
-        "spamInterval": 1
+        "spamInterval": 1,
+        "updatesPolling": 12,
       }
     }
   ]
@@ -93,6 +94,7 @@ After [Homebridge](https://github.com/nfarina/homebridge) has been installed:
 | notifier.filter | **No** | An array/string of matches to filter _(Default: ['Main process exited'])_ |
 | notifier.filterInstances | **No** | An array/string of matches to filter instances _(Default: false)_ |
 | notifier.spamInterval | **No** | Timer in minutes to block telegram spam _(Default: 1 min)_ |
+| notifier.updatesPolling | **No** | Polling interval in hours for check plugin updates _(Default: 12h)_ |
 
 
 ## Supported clients
