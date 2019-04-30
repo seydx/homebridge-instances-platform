@@ -1,6 +1,10 @@
 # Changelog
 
 
+## 1.4.9 - 2019-05-01
+-  Bugfixes
+
+
 ## 1.4.7 - 2019-04-25
 -  [NEW] Exclude services 
 
