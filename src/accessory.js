@@ -649,7 +649,15 @@ class BridgeAccessory {
       exec((this.accessory.context.sudo ? 'sudo ' : '') + 'npm install -g ' + plugin + '@latest', (error, stdout, stderr) => {
         
         if(error && error.code > 0) return reject('Error with CMD: ' + error.cmd);
-        if(stderr) return reject(stderr);
+        
+        if(stderr){
+        
+          stderr = stderr.toString();
+          
+          if(!stderr.includes('npm WARN'))
+            return reject(stderr);
+        
+        }
       
         resolve(true);
       });
